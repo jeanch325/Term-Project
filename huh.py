@@ -90,10 +90,32 @@ class Star(object):
 
 def appStarted(app):
     app.welcomePageOn = True
+    app.penDown = False
+    app.x1 = None
+    app.y1 = None
+    app.x11 = None
+    app.y11 = None
+    app.x2 = None
+    app.y2 = None
+    app.lineList = []
 
 def keyPressed(app, event):
     if event.key == "Enter":
         app.welcomePageOn = False
+
+def mousePressed(app, event):
+    app.penDown = True
+    app.x1, app.y1 = event.x, event.y
+    
+def mouseDragged(app, event):
+    app.penDown = True
+    app.x11, app.y11 = event.x, event.y
+
+def mouseReleased(app, event):
+    app.penDown = False
+    app.x2, app.y2 = event.x, event.y
+    app.lineList.append((app.x1, app.y1, app.x2, app.y2))
+
 
 def makeBlocks(app, canvas, level, blocks):
     for i in range(level):
@@ -116,9 +138,24 @@ def drawWelcomePage(app, canvas):
                         text='welcome page\nclick enter to begin', 
                         font='Arial 20 bold')
 
+def drawLine(app, canvas):
+    canvas.create_line(app.x1, app.y1, app.x11, app.y11)
+
+def setLine(app, canvas):
+    for line in app.lineList:
+        x1, y1, x2, y2 = line
+        canvas.create_line(x1, y1, x2, y2)
+    
+
 def redrawAll(app, canvas):
     if app.welcomePageOn:
         drawWelcomePage(app, canvas)
+    else:
+        if app.penDown and (app.x1!= None and app.y1!= None):
+            drawLine(app, canvas)
+        elif app.penDown != True:
+            setLine(app, canvas)
+            
 
 
 #==============================MAIN================================

@@ -32,7 +32,7 @@ def draw(app, canvas):
 
 
 def redrawAll(app, canvas):
-    return
+    draw(app, canvas)
 
 
 runApp(width=400, height=400)
