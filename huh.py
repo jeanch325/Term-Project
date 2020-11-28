@@ -1,14 +1,14 @@
 #===============================IMPORTS=================================
 import random
 import tkinter
-import pygame
 from cmu_112_graphics import *
+import PIL
 
 #===============================CLASSES=================================
 
 # SUPER CLASS FOR CHARACTER
 class Character(object):
-    def __init__(self, name, charWidth=10, charHeight=20, x, y):
+    def __init__(self, name, x, y, charWidth=10, charHeight=20):
         self.name = name
         self.charWidth = charWidth
         self.charHeight = charHeight
@@ -44,10 +44,10 @@ class Character(object):
     
 # SUB CLASS FOR CHICKEN
 class Chicken(Character):
-    def __init__(self, name, charWidth=10, charHeight=20, x, y, hp, level):
+    def __init__(self, name, x, y, hp, level, charWidth=10, charHeight=20):
         self.hp = 0
         self.level = 1
-        super().__init__(self, name, charWidth=10, charHeight=20, x, y)
+        super().__init__(self, name, x, y, charWidth=10, charHeight=20)
         
     # eat food
     def eatFood(self):
@@ -64,8 +64,8 @@ class Chicken(Character):
 # SUB CLASS FOR ENEMY
 class Enemy(Character):
     enemies = []
-    def __init__(self, name, charWidth=10, charHeight=20, x, y):
-        super().__init__(self, name, charWidth=10, charHeight=20, x, y)
+    def __init__(self, name, x, y, charWidth=10, charHeight=20):
+        super().__init__(self, name, x, y, charWidth=10, charHeight=20)
         Enemy.enemies.append(self.name) # do i have no name all of them :|     
         
     def die(self):
@@ -74,7 +74,7 @@ class Enemy(Character):
 # CLASS FOR FOOD
 class Star(object):
     stars = []
-    def __init__(self, x, y, size=5)
+    def __init__(self, x, y, size=5):
         self.x = x
         self.y = y
         Star.stars.append((self.x, self.y))
@@ -95,7 +95,7 @@ def keyPressed(app, event):
     if event.key == "Enter":
         app.welcomePageOn = False
 
-def makeBlocks (level):
+def makeBlocks(app, canvas, level, blocks):
     for i in range(level):
         x0 = random.randrange(width-blockW)
         y0 = random.randrange(height-blockH)
@@ -109,7 +109,7 @@ def makeBlocks (level):
             if ((x0 in range(xRange) or x1 in range(xRange)) and
                 y0 in range(yRange) or y1 in range(yRange)):
                 blocks.remove(newBlock)
-        print(newBlock)
+        canvas.create_rectangle(x0, y0, x1, y1)
 
 def drawWelcomePage(app, canvas):
     canvas.create_text(app.width/2, app.height/2, 
@@ -120,7 +120,6 @@ def redrawAll(app, canvas):
     if app.welcomePageOn:
         drawWelcomePage(app, canvas)
 
-runApp(width=700, height=700)
 
 #==============================MAIN================================
 
@@ -134,6 +133,7 @@ def main():
     # soft variables
     level = 5
     blocks = []
+    runApp(width=700, height=700)
 
 if __name__ == "__main__":
     main()
