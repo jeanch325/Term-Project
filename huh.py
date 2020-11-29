@@ -46,7 +46,6 @@ class Chicken(Character):
     def __init__(self, name, x, y, hp, level, charWidth=10, charHeight=20):
         self.hp = 0
         self.level = 1
-        self.image = 
         super().__init__(self, name, x, y, charWidth=10, charHeight=20)
         
     # eat food
@@ -91,7 +90,6 @@ class Star(object):
 def appStarted(app):
     app.welcomePageOn = True
     app.penDown = False
-
     app.makeLine = []
     app.helpPageOn = True
     app.newLevel = True
@@ -107,13 +105,16 @@ def keyPressed(app, event):
         app.helpPageOn = not app.helpPageOn
     elif event.key == 'r':
         app.makeLine.clear()
+        app.newLevel = True
         
 def mousePressed(app, event): 
     if app.newLevel:
         app.penDown = not app.penDown
         if app.penDown:
-            app.x1, app.y1 = event.x, event.y
-            app.makeLine.append((app.x1, app.y1))
+            print('hi')
+        if app.penDown:
+            x1, y1 = event.x, event.y
+            app.makeLine.append((x1, y1))
         if not app.penDown and len(app.makeLine) != 0:
             app.newLevel = False
 
