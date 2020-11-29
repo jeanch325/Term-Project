@@ -122,6 +122,7 @@ def mouseMoved(app, event):
     if app.penDown:
         x, y = event.x, event.y
         app.makeLine.append((x, y))
+        print(app.makeLine)
 
 def makeBlocks(app, canvas, level, blocks):
     for i in range(level):
