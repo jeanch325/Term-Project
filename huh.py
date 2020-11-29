@@ -1,6 +1,6 @@
 #===============================IMPORTS=================================
 import random
-import tkinter
+from tkinter import *
 from cmu_112_graphics import *
 from PIL import Image
 #===============================CLASSES=================================
@@ -46,6 +46,7 @@ class Chicken(Character):
     def __init__(self, name, x, y, hp, level, charWidth=10, charHeight=20):
         self.hp = 0
         self.level = 1
+        self.image = 
         super().__init__(self, name, x, y, charWidth=10, charHeight=20)
         
     # eat food
@@ -95,6 +96,9 @@ def appStarted(app):
     app.helpPageOn = True
     app.newLevel = True
 
+    app.chickenStartx = 5
+    app.chickenStarty = 5
+
 def keyPressed(app, event):
     if event.key == "Enter":
         app.welcomePageOn = False
@@ -117,7 +121,6 @@ def mouseMoved(app, event):
     if app.penDown:
         x, y = event.x, event.y
         app.makeLine.append((x, y))
-        print(app.makeLine)
 
 def makeBlocks(app, canvas, level, blocks):
     for i in range(level):
@@ -158,6 +161,11 @@ def drawHelpPage(app, canvas):
     canvas.create_text(app.width/2, app.height/2 + 40, text='and stop drawing.') 
     canvas.create_text(app.width/2, app.height/2 + 70, text='* you have 1 pen per level!') 
 
+def drawChicken(app, canvas):
+    # code to upload images is from https://stackoverflow.com/questions/43009527/how-to-insert-an-image-in-a-canvas-item
+    chicken = PhotoImage(file='chicken.png')
+    canvas.create_image(app.chickenStartx, app.chickenStarty, image=chicken, anchor=NW)
+
 
 def drawWelcomePage(app, canvas):
     canvas.create_text(app.width/2, app.height/2, 
@@ -171,6 +179,7 @@ def redrawAll(app, canvas):
         drawHelpPage(app, canvas)
     else:
         drawLine(app, canvas)
+        drawChicken(app, canvas)
 
             
 
