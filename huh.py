@@ -2,8 +2,7 @@
 import random
 import tkinter
 from cmu_112_graphics import *
-import PIL
-
+from PIL import Image
 #===============================CLASSES=================================
 
 # SUPER CLASS FOR CHARACTER
@@ -159,6 +158,7 @@ def drawHelpPage(app, canvas):
     canvas.create_text(app.width/2, app.height/2 + 40, text='and stop drawing.') 
     canvas.create_text(app.width/2, app.height/2 + 70, text='* you have 1 pen per level!') 
 
+
 def drawWelcomePage(app, canvas):
     canvas.create_text(app.width/2, app.height/2, 
                         text='welcome page\nclick enter to begin', 
@@ -192,6 +192,7 @@ def main():
 
     # functions
     
+
 
 if __name__ == "__main__":
     main()
