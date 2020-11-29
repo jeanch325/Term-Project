@@ -26,7 +26,6 @@ def appStarted(app):
     app.y1 = None
     app.x2 = None
     app.y2 = None
-    app.lineList = []
     app.makeLine = []
     app.penDown = False
 
@@ -46,18 +45,13 @@ def drawLine(app, canvas):
             x2, y2 = app.makeLine[i + 1]
             canvas.create_line(x1, y1, x2, y2)
 
-def setLine(app, canvas):
-    for i in range(len(app.lineList) - 1):
-        if app.lineList[i + 1] != None:
-            x1, y1 = app.lineList[i]
-            x2, y2 = app.lineList[i + 1]
-            canvas.create_line(x1, y1, x2, y2)
 
 def redrawAll(app, canvas):
-    '''if len(app.lineList) != 0:
-        setLine(app, canvas)'''
     if app.penDown:
         drawLine(app, canvas)
+    
+
+
     
 
 runApp(width=400, height=400)

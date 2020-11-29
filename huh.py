@@ -151,10 +151,11 @@ def redrawAll(app, canvas):
     if app.welcomePageOn:
         drawWelcomePage(app, canvas)
     else:
-        if app.penDown and (app.x1!= None and app.y1!= None):
-            drawLine(app, canvas)
-        elif app.penDown != True:
+        if len(app.lineList) != 0:
             setLine(app, canvas)
+        if app.penDown and (app.x11!= None and app.y11!= None):
+            drawLine(app, canvas)
+        
             
 
 
