@@ -24,7 +24,7 @@ class Character(object):
     
     def gravity(self): # gravity function
         '''
-        in main function, when calling chicken.gravity(), 
+        in main function, when calling Character.gravity(), 
         check if its x position is touching a block.
         if it is, stop gravity function until the chicken runs off the block 
         '''
@@ -91,21 +91,34 @@ class Star(object):
 def appStarted(app):
     app.welcomePageOn = True
     app.penDown = False
+
     app.makeLine = []
+    app.helpPageOn = True
+    app.newLevel = True
 
 def keyPressed(app, event):
     if event.key == "Enter":
         app.welcomePageOn = False
-
+    elif event.key == 'h':
+        app.penDown = False
+        app.helpPageOn = not app.helpPageOn
+    elif event.key == 'r':
+        app.makeLine.clear()
+        
 def mousePressed(app, event): 
-    app.penDown = not app.penDown
-    app.x1, app.y1 = event.x, event.y
-    app.makeLine.append((app.x1, app.y1))
+    if app.newLevel:
+        app.penDown = not app.penDown
+        if app.penDown:
+            app.x1, app.y1 = event.x, event.y
+            app.makeLine.append((app.x1, app.y1))
+        if not app.penDown and len(app.makeLine) != 0:
+            app.newLevel = False
 
 def mouseMoved(app, event):
     if app.penDown:
         x, y = event.x, event.y
         app.makeLine.append((x, y))
+        print(app.makeLine)
 
 def makeBlocks(app, canvas, level, blocks):
     for i in range(level):
@@ -123,10 +136,6 @@ def makeBlocks(app, canvas, level, blocks):
                 blocks.remove(newBlock)
         canvas.create_rectangle(x0, y0, x1, y1)
 
-def drawWelcomePage(app, canvas):
-    canvas.create_text(app.width/2, app.height/2, 
-                        text='welcome page\nclick enter to begin', 
-                        font='Arial 20 bold')
 
 def drawLine(app, canvas): 
     for i in range(1, len(app.makeLine) - 1):
@@ -135,12 +144,34 @@ def drawLine(app, canvas):
             x2, y2 = app.makeLine[i + 1]
             canvas.create_line(x1, y1, x2, y2)
 
+def drawHelpPage(app, canvas):
+    canvas.create_rectangle(app.width/2 - 120, app.height/2 - 120, 
+                            app.width/2 + 160, app.height/2 + 160, fill='blue')
+    canvas.create_rectangle(app.width/2 - 140, app.height/2 - 140, 
+                            app.width/2 + 140, app.height/2 + 140, fill='white')
+
+    canvas.create_text(app.width/2, app.height/2 - 120, text='HELP PAGE', font='Arial 20 bold') 
+    canvas.create_text(app.width/2, app.height/2 - 90, text='* press r to restart') 
+    canvas.create_text(app.width/2, app.height/2 - 60, text='* press h to access/leave help page')
+    canvas.create_text(app.width/2, app.height/2 - 30, text='* click once to put pen down') 
+    canvas.create_text(app.width/2, app.height/2 - 10 , text='and move mouse to draw.') 
+    canvas.create_text(app.width/2, app.height/2 + 20, text='* click again to lift pen up') 
+    canvas.create_text(app.width/2, app.height/2 + 40, text='and stop drawing.') 
+    canvas.create_text(app.width/2, app.height/2 + 70, text='* you have 1 pen per level!') 
+
+def drawWelcomePage(app, canvas):
+    canvas.create_text(app.width/2, app.height/2, 
+                        text='welcome page\nclick enter to begin', 
+                        font='Arial 20 bold')
+
 def redrawAll(app, canvas):
     if app.welcomePageOn:
         drawWelcomePage(app, canvas)
+    elif app.helpPageOn:
+        drawHelpPage(app, canvas)
     else:
         drawLine(app, canvas)
-        
+
             
 
 
@@ -148,15 +179,19 @@ def redrawAll(app, canvas):
 
 def main():
     # hard variables 
-    height = 400
-    width = 600
+    height = 600
+    width = 800
     blockW = 75
     blockH = 50
+
 
     # soft variables
     level = 5
     blocks = []
-    runApp(width=700, height=700)
+    runApp(width=width, height=height)
+
+    # functions
+    
 
 if __name__ == "__main__":
     main()
