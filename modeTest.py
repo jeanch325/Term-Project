@@ -73,18 +73,17 @@ class GameMode(Mode):
 
 
     def moveChicken(mode):
-            mode.chickenx += mode.dx
-            if (mode.chickenx < 0) or ((mode.chickenx + 
-                            mode.chickenSize) > mode.width): 
-                mode.dx = -mode.dx
+        mode.chickenx += mode.dx
+        if (mode.chickenx < 0) or ((mode.chickenx + 
+                        mode.chickenSize) > mode.width): 
+            mode.dx = -mode.dx
 
-
-    def gravity(mode):
-        mode.chickeny += mode.dy
-
-    def timerFired(mode):
-        if mode.go:
-            mode.moveChicken()
+        # to consider:
+        # - if on top of line
+        # - edge of line ... chicken should fall down 
+        # - if line is vertical
+        # - if incline of line is too much
+        # - 
         for point in mode.makeLine:
             x, y = point
             if x > mode.chickenx: # wrong
@@ -92,13 +91,21 @@ class GameMode(Mode):
                         or ((mode.chickeny + mode.chickenSize) >= mode.height)):
                         mode.gravity()
 
+    def gravity(mode):
+        mode.chickeny += mode.dy
+
+    def timerFired(mode):
+        if mode.go:
+            mode.moveChicken()
+
+
 
     def redrawAll(mode, canvas):
         for i in range(1, len(mode.makeLine) - 1):
             if mode.makeLine[i + 1] != None:
                 x1, y1 = mode.makeLine[i]
                 x2, y2 = mode.makeLine[i + 1]
-                canvas.create_line(x1, y1, x2, y2)
+                canvas.create_line(x1, y1, x2, y2, width=7)
         chicken = PhotoImage(file='chicken.png')
         canvas.create_image(mode.chickenx, mode.chickeny, image=chicken, anchor=NW)
 
