@@ -93,34 +93,28 @@ class GameMode(Mode):
             if abs(x - mode.chickenx) <= mode.dx: 
                 mode.chickeny = y - mode.chickenSize
                 
-            ''' 
-            
-            chicken is falling if it is not moving in x direction
-
-            if it is falling and its y value is within the range of a y point
-                in mode.makeLine, it is no longer falling and is moving in 
-                x direction
-            if it is moving right and its (x value + size + dx) > rightEdge in 
-                makeLine, the chicken is falling 
-            if it is moving left and its (x value + dx) < leftEdge in makeLine,
-                the chicken is falling
-            how to determine rightEdge vs leftEdge:
-                if makeLine[0][0] < makeLine[-1][0]:
-                    leftEdge = makeLine[0][0]
-                    rightEdge = makeLine[-1][0]
-                else:
-                    leftEdge = makeLine[-1][0]
-                    rightEdge = makeLine[0][0]
-                    
-                    *** how to apply to lines that loop ????????????????? ***
-                        
-            
-            '''
-
-
-
-
-
+    ''' 
+    def move(x, y, isFalling, makeLine, movingRight, movingLeft):
+        if isFalling == True:
+            if abs(y - (mode.chickeny + mode.chickenSize)) <= mode.dy:
+                return isFalling == False # ??
+            elif (mode.chickeny + mode.chickenSize) >= mode.height:
+                return isFalling = False # ??
+        else:
+            if makeLine[0][0] < makeLine[-1][0]:
+                leftEdge = makeLine[0][0]
+                rightEdge = makeLine[-1][0]
+            else:
+                leftEdge = makeLine[-1][0]
+                rightEdge = makeLine[0][0]
+            if ((movingRight and (mode.chickenx + mode.chickenSize + mode.dx) >= rightEdge)
+                    or (movingLeft and ((mode.chickenx + mode.dx) <= leftEdge))):
+                    return isFalling = True
+                
+                *** how to apply to lines that loopdydoop ????????????????? ***
+                
+    
+    '''
 
 
     def gravity(mode):
