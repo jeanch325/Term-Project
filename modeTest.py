@@ -73,11 +73,15 @@ class GameMode(Mode):
 
 
     def moveChicken(mode):
+        movingRight = True # for which way chicken is facing & to fall off edge of line or block
         mode.chickenx += mode.dx
         if (mode.chickenx < 0) or ((mode.chickenx + 
                         mode.chickenSize) > mode.width): 
             mode.dx = -mode.dx
-
+            if mode.dx > 0:
+                movingRight = True
+            else:
+                movingRight = False
         # to consider:
         # - if on top of line
         # - edge of line ... chicken should fall down 
@@ -86,13 +90,42 @@ class GameMode(Mode):
         # - 
         for point in mode.makeLine:
             x, y = point
-            if x > mode.chickenx: # wrong
-                if not ((abs(y - (mode.chickeny + mode.chickenSize)) <= mode.dy)
-                        or ((mode.chickeny + mode.chickenSize) >= mode.height)):
-                        mode.gravity()
+            if abs(x - mode.chickenx) <= mode.dx: 
+                mode.chickeny = y - mode.chickenSize
+                
+            ''' 
+            
+            chicken is falling if it is not moving in x direction
+
+            if it is falling and its y value is within the range of a y point
+                in mode.makeLine, it is no longer falling and is moving in 
+                x direction
+            if it is moving right and its (x value + size + dx) > rightEdge in 
+                makeLine, the chicken is falling 
+            if it is moving left and its (x value + dx) < leftEdge in makeLine,
+                the chicken is falling
+            how to determine rightEdge vs leftEdge:
+                if makeLine[0][0] < makeLine[-1][0]:
+                    leftEdge = makeLine[0][0]
+                    rightEdge = makeLine[-1][0]
+                else:
+                    leftEdge = makeLine[-1][0]
+                    rightEdge = makeLine[0][0]
+                    
+                    *** how to apply to lines that loop ????????????????? ***
+                        
+            
+            '''
+
+
+
+
+
+
 
     def gravity(mode):
-        mode.chickeny += mode.dy
+        if not (mode.chickeny + mode.chickenSize) >= mode.height:
+            mode.chickeny += mode.dy 
 
     def timerFired(mode):
         if mode.go:
