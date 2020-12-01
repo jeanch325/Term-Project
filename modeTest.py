@@ -293,7 +293,7 @@ class GameMode(Mode):
             (x0, y0, x1, y1) = block
             shortBlock = PhotoImage(file='short-block.png')
             canvas.create_image(x0, y0, image=shortBlock)
-
+ 
 class HelpMode(Mode):
     def redrawAll(mode, canvas):
         loc = mode.height/2 - 140
