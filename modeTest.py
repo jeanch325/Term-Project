@@ -18,58 +18,64 @@ class SplashScreenMode(Mode):
 
 class DrawingMode(Mode):
     def appStarted(mode):
-        mode.xMargin = 50
-        mode.topMargin = 75
-        mode.bottomMargin = 25
+        mode.margin = 100
         mode.cols = 25
         mode.rows = 25
         mode.selection = (-1, -1) # (row, col) of selection, (-1,-1) for none
         mode.color = 'black'
+        mode.penDown = False
+        mode.draw = []
     
     # grid code from https://www.cs.cmu.edu/~112/notes/notes-animations-part1.html#exampleGrids
-    def pointInGrid(mode, x, y):
-        # return True if (x, y) is inside the grid defined by app.
-        return ((mode.xMargin <= x <= mode.width-mode.xMargin) and
-                (mode.bottomMargin <= y <= mode.height-mode.topMargin))
-
     def getCell(mode, x, y):
         # aka "viewToModel"
         # return (row, col) in which (x, y) occurred or (-1, -1) if outside grid.
         if (not mode.pointInGrid(x, y)):
             return (-1, -1)
-        gridWidth  = mode.width - 2*mode.xMargin
-        gridHeight = mode.height - mode.topMargin - mode.bottomMargin
+        gridWidth  = mode.width - mode.margin
+        gridHeight = mode.height - mode.margin 
         cellWidth  = gridWidth / mode.cols
         cellHeight = gridHeight / mode.rows
 
         # Note: we have to use int() here and not just // because
         # row and col cannot be floats and if any of x, y, mode.margin,
         # cellWidth or cellHeight are floats, // would still produce floats.
-        row = int((y - mode.bottomMargin) / cellHeight)
-        col = int((x - mode.xMargin) / cellWidth)
+        row = int((y - mode.margin) / cellHeight)
+        col = int((x - mode.margin) / cellWidth)
 
         return (row, col)
 
     def getCellBounds(mode, row, col):
         # aka "modelToView"
         # returns (x0, y0, x1, y1) corners/bounding box of given cell in grid
-        gridWidth  = mode.width - 2*mode.xMargin
-        gridHeight = mode.height - mode.topMargin - mode.bottomMargin
+        gridWidth  = mode.width - mode.margin
+        gridHeight = mode.height - mode.margin 
         cellWidth = gridWidth / mode.cols
         cellHeight = gridHeight / mode.rows
-        x0 = mode.xMargin + col * cellWidth
-        x1 = mode.xMargin + (col+1) * cellWidth
-        y0 = mode.topMargin + row * cellHeight
-        y1 = mode.bottomMargin + (row+2) * cellHeight
+        x0 = mode.margin + col * cellWidth
+        x1 = mode.margin + (col+1) * cellWidth
+        y0 = mode.margin + row * cellHeight
+        y1 = mode.margin + (row+2) * cellHeight
         return (x0, y0, x1, y1)
-
-    def mousePressed(mode, event):
-        (row, col) = mode.getCell(event.x, event.y)
-        # select this (row, col) unless it is selected
-        if (mode.selection == (row, col)):
-            mode.selection = (-1, -1)
+        
+    def mousePressed(mode, event): 
+        mode.penDown = not mode.penDown
+        if mode.penDown:
+            x1, y1 = event.x, event.y
+            mode.draw.append((x1, y1))
         else:
-            mode.selection = (row-2, col)
+            if len(mode.draw) > 0:
+                print(mode.draw)
+
+    def mouseMoved(mode, event):
+        if mode.penDown:
+            x, y = event.x, event.y
+            mode.draw.append((x, y))
+
+    def checkPoint(mode, x, y, x0, y0, x1, y1):
+        size = abs(x0 - x1)
+        if (abs(x0 - x) < size and abs(x1 - x) < size and abs(y0 - y) < size and abs(y1 - y) < size): 
+            return True
 
     def redrawAll(mode, canvas):
         font = 'Arial 20 bold'
@@ -83,11 +89,12 @@ class DrawingMode(Mode):
         for row in range(mode.rows):
             for col in range(mode.cols):
                 (x0, y0, x1, y1) = mode.getCellBounds(row, col)
-                if (mode.selection == (row, col)):
-                    fill = mode.color  
-                else:
-                    fill = 'white'
-                canvas.create_rectangle(x0, y0, x1, y1, fill=fill, width=1)
+                size = abs(x0 - x1)
+                for point in mode.draw:
+                    x, y = point
+                    if mode.checkPoint(x, y, x0, y0, x1, y1):
+                        print(x, y, x0, y0, x1, y1)
+                        canvas.create_rectangle(x0, y0, x1, y1, fill=mode.color, width=1)
 
     def keyPressed(mode, event):
         if event.key == 'h':
@@ -113,7 +120,7 @@ class GameMode(Mode):
         mode.chickenSize = 50
         mode.direction = 'right'
         mode.dx = 7
-        mode.dy = 15 
+        mode.dy = 5 
 
         mode.go = False
         mode.onSurface = False
@@ -126,6 +133,8 @@ class GameMode(Mode):
         mode.sBlockH = 74
         mode.level = 1
         mode.blocks = []
+
+        mode.chickenPath = []
         
 
 
@@ -177,59 +186,97 @@ class GameMode(Mode):
         setUpBlocks(mode.lBlockW, mode.lBlockH, mode.level)
 
         # draw blocks
-        
+    
+    def checkSurface(mode, surfaceList, chickenr):
+        # helper for move(mode, chickenPath)
+        for point in surfaceList:
+            x, y = point
+            # checking if chicken's position is above and in x, y range of surface
+            if abs(y - (mode.chickeny + chickenr)) <= (mode.chickenSize + mode.dy): 
+                if abs(x - (mode.chickenx + chickenr)) <= (mode.chickenSize + mode.dx):
+                   mode.chickenPath.append((x, y))
+        if len(mode.chickenPath) != 0:
+            mode.onSurface = True
+        return mode.chickenPath
 
+    def recursive(mode, chickenPath):
+        if len(chickenPath) == 0:
+            mode.onSurface = False
+            mode.chickenx += mode.dx
+            return
+        else:
+            mode.chickenx =  chickenPath[0][0]
+            mode.chickeny = (chickenPath[0][1] - mode.chickenSize)
+            time.sleep = (0.5)
+            return mode.recursive(chickenPath[1:])
 
+    def timerFired(mode):
+        chickenr = mode.chickenSize // 2
+        if mode.go:
+            mode.chickenPath = mode.checkSurface(mode.makeLine, chickenr)
+            # call for s blocks and l blocks
+            if mode.onSurface:
+                mode.recursive(mode.chickenPath)
+                mode.onSurface = False
+            else:
+                mode.chickeny += mode.dy
+                print(mode.chickeny)
+                if (mode.chickeny + mode.chickenSize) >= mode.height:
+                    mode.chickeny = mode.height - mode.chickenSize
+                    mode.chickenx += mode.dx
+                if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
+                    mode.dx = -mode.dx
 
-    def checkSurface(mode, surfaceList, chickenCent, chickenr, chickenPath):
+    '''def checkSurface(mode, surfaceList, chickenCent, chickenr, chickenPath):
         # helper for move(mode, chickenPath)
         for point in surfaceList:
             x, y = point
             # checking if chicken's position is above and in x, y range of surface
             if abs(y - (mode.chickeny + chickenr)) <= (chickenr + mode.dy): 
                 if abs(x - (mode.chickenx + chickenr)) <= (chickenr + mode.dx):
-                    mode.onSurface = True
                     chickenPath.append((x, y))
-                    
-        
+        if len(chickenPath) != 0:
+            mode.onSurface = True
+        print(chickenPath)
+        return(chickenPath, mode.onSurface)
 
     def move(mode, chickenPath, i):
         # moves chicken left, right, and down
         chickenCent = mode.chickenx + (0.5 * mode.chickenSize)
         chickenr = mode.chickenSize // 2
-        chickenPath = []
 
         # check for line: if valid, it adds a point
-        mode.checkSurface(mode.makeLine, chickenCent, chickenr, chickenPath) 
+        chickenPath = mode.checkSurface(mode.makeLine, chickenCent, chickenr, chickenPath)[0]
         if mode.onSurface:
             x, y = chickenPath[i]
-
-            mode.chickenx = (x + mode.chickenSize)
+    
+            mode.chickenx = x
             mode.chickeny = (y - mode.chickenSize)
             time.sleep(0.05) # from https://stackoverflow.com/questions/16555120/how-can-i-slow-down-a-loop-in-python
             if i + 1 == len(chickenPath):
+
                 mode.onSurface = False
                 i = 0
-
-        
+            print('chicken: ', mode.chickenx, mode.chickeny) 
+            mode.i += 1
+            print(mode.i)       
 
     def moveChicken(mode, i):
         chickenPath = []
-        mode.move(chickenPath, i)
+        mode.move(chickenPath, i)        
 
 
     def timerFired(mode):
         if mode.go:
             mode.moveChicken(mode.i) 
-            mode.i += 1
             mode.chickeny += mode.dy
             if (mode.chickeny + mode.chickenSize) >= mode.height:
+                mode.onSurface = True
                 mode.chickeny = mode.height - mode.chickenSize
-            if (mode.onSurface == False):
+            if (mode.onSurface == True):
                 mode.chickenx += mode.dx 
                 if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize)> mode.width): 
-                    mode.dx = -mode.dx
-
+                    mode.dx = -mode.dx'''
 
 
     def redrawAll(mode, canvas):
