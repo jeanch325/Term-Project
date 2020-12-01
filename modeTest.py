@@ -22,12 +22,14 @@ class GameMode(Mode):
         mode.makeLine = []
         mode.newLevel = True
 
+        mode.mouseMovedDelay = 10
+
         mode.chickenx = 5
         mode.chickeny = 5
         mode.chickenSize = 50
         mode.direction = 'right'
         mode.dx = 7
-        mode.dy = 15 # gravity ??
+        mode.dy = 15 
 
         mode.go = False
 
@@ -90,16 +92,15 @@ class GameMode(Mode):
         # - 
         for point in mode.makeLine:
             x, y = point
-            if abs(x - mode.chickenx) <= mode.dx: 
-                mode.chickeny = y - mode.chickenSize
-                
-    ''' 
+            move(x, y, True, mode.makeLine, True, False) 
+            
+     
     def move(x, y, isFalling, makeLine, movingRight, movingLeft):
         if isFalling == True:
             if abs(y - (mode.chickeny + mode.chickenSize)) <= mode.dy:
-                return isFalling == False # ??
+                isFalling = False
             elif (mode.chickeny + mode.chickenSize) >= mode.height:
-                return isFalling = False # ??
+                isFalling = False # ??
         else:
             if makeLine[0][0] < makeLine[-1][0]:
                 leftEdge = makeLine[0][0]
@@ -109,12 +110,12 @@ class GameMode(Mode):
                 rightEdge = makeLine[0][0]
             if ((movingRight and (mode.chickenx + mode.chickenSize + mode.dx) >= rightEdge)
                     or (movingLeft and ((mode.chickenx + mode.dx) <= leftEdge))):
-                    return isFalling = True
+                    isFalling = True
                 
-                *** how to apply to lines that loopdydoop ????????????????? ***
+                #*** how to apply to lines that loopdydoop ????????????????? 
                 
     
-    '''
+    
 
 
     def gravity(mode):
