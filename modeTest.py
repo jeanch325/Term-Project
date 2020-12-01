@@ -1,5 +1,6 @@
 from cmu_112_graphics import *
 import random
+import time
 
 
 # mode class structure is from https://www.cs.cmu.edu/~112/notes/notes-animations-part3.html#subclassingModalApp
@@ -22,7 +23,7 @@ class GameMode(Mode):
         mode.makeLine = []
         mode.newLevel = True
 
-        mode.mouseMovedDelay = 10
+        mode.mouseMovedDelay = 0
 
         mode.chickenx = 5
         mode.chickeny = 5
@@ -32,6 +33,7 @@ class GameMode(Mode):
         mode.dy = 15 
 
         mode.go = False
+        mode.onSurface = False
 
 
 
@@ -73,58 +75,58 @@ class GameMode(Mode):
                     blocks.remove(newBlock)
             canvas.create_rectangle(x0, y0, x1, y1)
 
+    def checkSurface(mode, surfaceList, chickenCent, chickenr, chickenPath):
+        # helper for move(mode, chickenPath)
+        for point in surfaceList:
+            x, y = point
+            print('sL', point)
+            # checking if chicken's position is above and in x, y range of surface
+            if abs(y - (mode.chickeny + chickenr)) <= (chickenr + mode.dy): 
+                if abs(x - (mode.chickenx + chickenr)) <= (chickenr + mode.dx):
+                    print(point) 
+                    mode.onSurface = True
+                    mode.i = 0
+                    chickenPath.append((x, y))
+                    print(point)
+        
+
+    def move(mode, chickenPath):
+        # moves chicken left, right, and down
+        chickenCent = mode.chickenx + (0.5 * mode.chickenSize)
+        chickenr = mode.chickenSize // 2
+        chickenPath = []
+
+        # check for line: if valid, it adds a point
+        mode.checkSurface(mode.makeLine, chickenCent, chickenr, chickenPath) 
+
+
+        for i in range(len(chickenPath)): # no
+            x, y = chickenPath[i] # [mode.i]
+            mode.chickenx = (x + mode.chickenSize)
+            mode.chickeny = (y - mode.chickenSize)
+            time.sleep(0.05) # from https://stackoverflow.com/questions/16555120/how-can-i-slow-down-a-loop-in-python
+            if i + 1== len(chickenPath):
+                mode.onSurface = False
+                # mode.i = 0
+
+        
 
     def moveChicken(mode):
-        movingRight = True # for which way chicken is facing & to fall off edge of line or block
-        mode.chickenx += mode.dx
-        if (mode.chickenx < 0) or ((mode.chickenx + 
-                        mode.chickenSize) > mode.width): 
-            mode.dx = -mode.dx
-            if mode.dx > 0:
-                movingRight = True
-            else:
-                movingRight = False
-        # to consider:
-        # - if on top of line
-        # - edge of line ... chicken should fall down 
-        # - if line is vertical
-        # - if incline of line is too much
-        # - 
-        for point in mode.makeLine:
-            x, y = point
-            move(x, y, True, mode.makeLine, True, False) 
-            
-     
-    def move(x, y, isFalling, makeLine, movingRight, movingLeft):
-        if isFalling == True:
-            if abs(y - (mode.chickeny + mode.chickenSize)) <= mode.dy:
-                isFalling = False
-            elif (mode.chickeny + mode.chickenSize) >= mode.height:
-                isFalling = False # ??
-        else:
-            if makeLine[0][0] < makeLine[-1][0]:
-                leftEdge = makeLine[0][0]
-                rightEdge = makeLine[-1][0]
-            else:
-                leftEdge = makeLine[-1][0]
-                rightEdge = makeLine[0][0]
-            if ((movingRight and (mode.chickenx + mode.chickenSize + mode.dx) >= rightEdge)
-                    or (movingLeft and ((mode.chickenx + mode.dx) <= leftEdge))):
-                    isFalling = True
-                
-                #*** how to apply to lines that loopdydoop ????????????????? 
-                
-    
-    
+        chickenPath = []
+        mode.move(chickenPath)
 
-
-    def gravity(mode):
-        if not (mode.chickeny + mode.chickenSize) >= mode.height:
-            mode.chickeny += mode.dy 
 
     def timerFired(mode):
         if mode.go:
-            mode.moveChicken()
+            mode.moveChicken() # add 1 to mode.i and pass in mode.i 
+            # 
+            mode.chickeny += mode.dy
+            if (mode.chickeny + mode.chickenSize) >= mode.height:
+                mode.chickeny = mode.height - mode.chickenSize
+            if (mode.onSurface == False):
+                mode.chickenx += mode.dx 
+                if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize)> mode.width): 
+                    mode.dx = -mode.dx
 
 
 
