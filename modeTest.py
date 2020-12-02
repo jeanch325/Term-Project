@@ -9,12 +9,12 @@ class SplashScreenMode(Mode):
     def redrawAll(mode, canvas):
         font = 'Arial 20 bold'
         canvas.create_text(mode.width/2, mode.height/2, 
-                        text='welcome page\nclick enter to begin', 
+                        text='welcome page\nclick enter to begin playing', 
                         font='Arial 20 bold')
 
     def keyPressed(mode, event):
         if event.key == 'Enter':
-            mode.app.setActiveMode(mode.app.helpMode)
+            mode.app.setActiveMode(mode.app.gameMode)
 
 class DrawingMode(Mode):
     def appStarted(mode):
@@ -39,6 +39,7 @@ class DrawingMode(Mode):
                         ['black', 'gray23','gray62'], 
                         ['gray85', 'white', 'saddlebrown'], 
                         ['sienna4', 'sienna1', 'navajo white']]
+
 
     # grid code from https://www.cs.cmu.edu/~112/notes/notes-animations-part1.html#exampleGrids
 
@@ -92,16 +93,15 @@ class DrawingMode(Mode):
              row = (y1 - 100) // 33
              col = x1 // 33
              mode.color = mode.colors[row][col]
-             print(mode.color)
         else:
             mode.penDown = not mode.penDown
             if mode.penDown:
                 if mode.penType == 'pen':
-                    mode.draw.append((x1, y1))
+                    mode.draw.append((x1, y1, mode.color))
                 elif mode.penType == 'eraser':
                     # find the cell that the x,y coord is in and remove it but HOW
                     for point in mode.draw:
-                        x, y = point
+                        x, y, color = point
                         if (abs(x1-x) < 16) and (abs(y1-y) < 16):
                             mode.draw.remove(point)
 
@@ -109,10 +109,10 @@ class DrawingMode(Mode):
         if mode.penDown:
             x1, y1 = event.x, event.y
             if mode.penType == 'pen':
-                mode.draw.append((x1, y1))
+                mode.draw.append((x1, y1, mode.color))
             elif mode.penType == 'eraser':
                 for point in mode.draw:
-                    x, y = point
+                    x, y, color = point
                     if (abs(x1-x) < 16) and (abs(y1-y) < 16):
                         mode.draw.remove(point)
 
@@ -122,10 +122,14 @@ class DrawingMode(Mode):
         if (abs(x0 - x) < sizex and abs(x1 - x) < sizex and abs(y0 - y) < sizey and abs(y1 - y) < sizey): 
             return True
 
+
+
     def redrawAll(mode, canvas):
-        font = 'Arial 20 bold'
+        # drawing logo
         drawing = PhotoImage(file='drawing.png')
         canvas.create_image(0, 0, image=drawing, anchor=NW)
+
+        # instructions
         canvas.create_rectangle(100, 0, mode.width, 100, fill='black')
         canvas.create_rectangle(105, 7, mode.width-8, 95, fill='white')
         canvas.create_text(120, 10, text='press "e" for eraser', font='Arial 15', anchor=NW)
@@ -135,7 +139,7 @@ class DrawingMode(Mode):
         canvas.create_text(290, 10, text='click once to place pen down,', font='Arial 15', anchor=NW)
         canvas.create_text(290, 30, text='click again to lift pen up', font='Arial 15', anchor=NW)
 
-        # colors            
+        # color picker            
         for r in range(len(mode.colors)):
             for c in range(len(mode.colors[0])):
                 (x0, y0, x1, y1) = mode.getColorCellBounds(r, c)
@@ -146,9 +150,10 @@ class DrawingMode(Mode):
             for col in range(mode.cols):
                 (x0, y0, x1, y1) = mode.getCellBounds(row, col)
                 for point in mode.draw:
-                    x, y = point
+                    x, y, color = point
                     if mode.checkPoint(x, y, x0, y0, x1, y1):
-                        canvas.create_rectangle(x0, y0, x1, y1, fill=mode.color, width=0)
+                        canvas.create_rectangle(x0, y0, x1, y1, fill=color, width=0)
+                
 
     def keyPressed(mode, event):
         if event.key == 'h':
@@ -156,8 +161,7 @@ class DrawingMode(Mode):
         elif event.key == 'Enter':
             mode.app.setActiveMode(mode.app.gameMode)
         elif event.key == 's':
-            # save and uplad image
-            pass
+            mode.app.gameMode.chicken = 'newcharacter.png'
         elif event.key == 'e':
             mode.penType = 'eraser'
         elif event.key == 'p':
@@ -174,6 +178,7 @@ class GameMode(Mode):
 
         mode.mouseMovedDelay = 0
 
+        mode.chicken = 'chicken.png'
         mode.chickenx = 5
         mode.chickeny = 5
         mode.chickenSize = 50
@@ -270,7 +275,7 @@ class GameMode(Mode):
             return mode.recursive(chickenPath[1:])
 
     def timerFired(mode): #non recursive
-        print(mode.chickenPath)
+        #print(mode.chickenPath)
         chickenr = mode.chickenSize // 2
         if mode.go:
             if len(mode.chickenPath) == 0 and mode.onSurface == False:
@@ -317,8 +322,9 @@ class GameMode(Mode):
                 x1, y1 = mode.makeLine[i]
                 x2, y2 = mode.makeLine[i + 1]
                 canvas.create_line(x1, y1, x2, y2, width=7)
-        chicken = PhotoImage(file='chicken.png')
-        canvas.create_image(mode.chickenx, mode.chickeny, image=chicken, anchor=NW)
+        char = PhotoImage(file=mode.chicken)
+        canvas.create_image(mode.chickenx, mode.chickeny, image=char, anchor=NW)
+        
         # why doesn't this work
         for block in mode.blocks:
             (x0, y0, x1, y1) = block
@@ -358,4 +364,8 @@ class MyModalApp(ModalApp):
         app.setActiveMode(app.splashScreenMode)
         app.drawingMode = DrawingMode()
 
-app = MyModalApp(width=500, height=500)
+def main():
+    app = MyModalApp(width=500, height=500)
+
+if __name__ == '__main__':
+    main()
