@@ -209,6 +209,10 @@ class GameMode(Mode):
             mode.app.setActiveMode(mode.app.helpMode)
         elif event.key == 'r':
             mode.makeLine.clear()
+            mode.newLevel = True
+            mode.go = False
+            mode.chickenx = 5
+            mode.chickeny = 5
             
     def mousePressed(mode, event):
         if ((mode.width-110) < event.x < (mode.width-10) and
