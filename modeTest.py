@@ -16,7 +16,6 @@ class SplashScreenMode(Mode):
         if event.key == 'Enter':
             mode.app.setActiveMode(mode.app.helpMode)
 
-<<<<<<< HEAD
 class DrawingMode(Mode):
     def appStarted(mode):
         mode.margin = 100
@@ -104,8 +103,6 @@ class DrawingMode(Mode):
             pass
 
 
-=======
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
 class GameMode(Mode):
     def appStarted(mode):
         mode.penDown = False
@@ -120,16 +117,11 @@ class GameMode(Mode):
         mode.chickenSize = 50
         mode.direction = 'right'
         mode.dx = 7
-<<<<<<< HEAD
         mode.dy = 5 
-=======
-        mode.dy = 15 
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
 
         mode.go = False
         mode.onSurface = False
 
-<<<<<<< HEAD
         mode.i = 0
 
         mode.sBlockW = 100
@@ -142,19 +134,14 @@ class GameMode(Mode):
         mode.chickenPath = []
         
 
-=======
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
 
 
     def keyPressed(mode, event):
         if event.key == 'h':
             mode.penDown = False
             mode.app.setActiveMode(mode.app.helpMode)
-<<<<<<< HEAD
         elif not mode.go and event.key == 'd':
             mode.app.setActiveMode(mode.app.drawingMode)
-=======
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
         elif event.key == 'r':
             mode.makeLine.clear()
             
@@ -173,7 +160,6 @@ class GameMode(Mode):
             x, y = event.x, event.y
             mode.makeLine.append((x, y))
 
-<<<<<<< HEAD
     def setUpBlocks(mode, blockW, blockH, level):
         for i in range(level):
             x0 = random.randrange(mode.width-blockW)
@@ -183,22 +169,10 @@ class GameMode(Mode):
             newBlock = (x0, y0, x1, y1)
             mode.blocks.append(newBlock)
             for oldBlock in mode.blocks:
-=======
-    def makeBlocks(mode, canvas, level, blocks):
-        for i in range(level):
-            x0 = random.randrange(width-blockW)
-            y0 = random.randrange(height-blockH)
-            x1 = x0 + blockW
-            y1 = y0 + blockH
-            newBlock = (x0, y0, x1, y1)
-            blocks.append(newBlock)
-            for oldBlock in blocks:
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
                 xRange = oldBlock[2] - oldBlock[0] 
                 yRange = oldBlock[3] - oldBlock[1]
                 if ((x0 in range(xRange) or x1 in range(xRange)) and
                     y0 in range(yRange) or y1 in range(yRange)):
-<<<<<<< HEAD
                     mode.blocks.remove(newBlock)
 
 
@@ -250,114 +224,6 @@ class GameMode(Mode):
                 if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
                     mode.dx = -mode.dx
 
-    '''def checkSurface(mode, surfaceList, chickenCent, chickenr, chickenPath):
-        # helper for move(mode, chickenPath)
-        for point in surfaceList:
-            x, y = point
-            # checking if chicken's position is above and in x, y range of surface
-            if abs(y - (mode.chickeny + chickenr)) <= (chickenr + mode.dy): 
-                if abs(x - (mode.chickenx + chickenr)) <= (chickenr + mode.dx):
-                    chickenPath.append((x, y))
-        if len(chickenPath) != 0:
-            mode.onSurface = True
-        print(chickenPath)
-        return(chickenPath, mode.onSurface)
-
-    def move(mode, chickenPath, i):
-        # moves chicken left, right, and down
-        chickenCent = mode.chickenx + (0.5 * mode.chickenSize)
-        chickenr = mode.chickenSize // 2
-
-        # check for line: if valid, it adds a point
-        chickenPath = mode.checkSurface(mode.makeLine, chickenCent, chickenr, chickenPath)[0]
-        if mode.onSurface:
-            x, y = chickenPath[i]
-    
-            mode.chickenx = x
-            mode.chickeny = (y - mode.chickenSize)
-            time.sleep(0.05) # from https://stackoverflow.com/questions/16555120/how-can-i-slow-down-a-loop-in-python
-            if i + 1 == len(chickenPath):
-
-                mode.onSurface = False
-                i = 0
-            print('chicken: ', mode.chickenx, mode.chickeny) 
-            mode.i += 1
-            print(mode.i)       
-
-    def moveChicken(mode, i):
-        chickenPath = []
-        mode.move(chickenPath, i)        
-=======
-                    blocks.remove(newBlock)
-            canvas.create_rectangle(x0, y0, x1, y1)
-
-    def checkSurface(mode, surfaceList, chickenCent, chickenr, chickenPath):
-        # helper for move(mode, chickenPath)
-        for point in surfaceList:
-            x, y = point
-            print('sL', point)
-            # checking if chicken's position is above and in x, y range of surface
-            if abs(y - (mode.chickeny + chickenr)) <= (chickenr + mode.dy): 
-                if abs(x - (mode.chickenx + chickenr)) <= (chickenr + mode.dx):
-                    print(point) 
-                    mode.onSurface = True
-                    mode.i = 0
-                    chickenPath.append((x, y))
-                    print(point)
-        
-
-    def move(mode, chickenPath):
-        # moves chicken left, right, and down
-        chickenCent = mode.chickenx + (0.5 * mode.chickenSize)
-        chickenr = mode.chickenSize // 2
-        chickenPath = []
-
-        # check for line: if valid, it adds a point
-        mode.checkSurface(mode.makeLine, chickenCent, chickenr, chickenPath) 
-
-
-        for i in range(len(chickenPath)): # no
-            x, y = chickenPath[i] # [mode.i]
-            mode.chickenx = (x + mode.chickenSize)
-            mode.chickeny = (y - mode.chickenSize)
-            time.sleep(0.05) # from https://stackoverflow.com/questions/16555120/how-can-i-slow-down-a-loop-in-python
-            if i + 1== len(chickenPath):
-                mode.onSurface = False
-                # mode.i = 0
-
-        
-
-    def moveChicken(mode):
-        chickenPath = []
-        mode.move(chickenPath)
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
-
-
-    def timerFired(mode):
-        if mode.go:
-<<<<<<< HEAD
-            mode.moveChicken(mode.i) 
-            mode.chickeny += mode.dy
-            if (mode.chickeny + mode.chickenSize) >= mode.height:
-                mode.onSurface = True
-                mode.chickeny = mode.height - mode.chickenSize
-            if (mode.onSurface == True):
-                mode.chickenx += mode.dx 
-                if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize)> mode.width): 
-                    mode.dx = -mode.dx'''
-=======
-            mode.moveChicken() # add 1 to mode.i and pass in mode.i 
-            # 
-            mode.chickeny += mode.dy
-            if (mode.chickeny + mode.chickenSize) >= mode.height:
-                mode.chickeny = mode.height - mode.chickenSize
-            if (mode.onSurface == False):
-                mode.chickenx += mode.dx 
-                if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize)> mode.width): 
-                    mode.dx = -mode.dx
-
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
-
 
     def redrawAll(mode, canvas):
         for i in range(1, len(mode.makeLine) - 1):
@@ -368,7 +234,6 @@ class GameMode(Mode):
         chicken = PhotoImage(file='chicken.png')
         canvas.create_image(mode.chickenx, mode.chickeny, image=chicken, anchor=NW)
 
-<<<<<<< HEAD
         # why doesn't this work
         for block in mode.blocks:
             (x0, y0, x1, y1) = block
@@ -378,16 +243,11 @@ class GameMode(Mode):
 class HelpMode(Mode):
     def redrawAll(mode, canvas):
         loc = mode.height/2 - 140
-=======
-class HelpMode(Mode):
-    def redrawAll(mode, canvas):
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
         canvas.create_rectangle(mode.width/2 - 120, mode.height/2 - 120, 
                                 mode.width/2 + 160, mode.height/2 + 160, fill='blue')
         canvas.create_rectangle(mode.width/2 - 140, mode.height/2 - 140, 
                                 mode.width/2 + 140, mode.height/2 + 140, fill='white')
 
-<<<<<<< HEAD
         canvas.create_text(mode.width/2, loc + 20, text='HELP PAGE', font='Arial 20 bold') 
         canvas.create_text(mode.width/2, loc + 50, text='* press r to restart') 
         canvas.create_text(mode.width/2, loc + 80, text='* press h to access/leave help page')
@@ -398,25 +258,12 @@ class HelpMode(Mode):
         canvas.create_text(mode.width/2, loc + 220, text='* click again to lift pen up') 
         canvas.create_text(mode.width/2, loc + 240, text='and stop drawing.') 
         canvas.create_text(mode.width/2, loc + 270, text='* you have 1 pen per level!') 
-=======
-        canvas.create_text(mode.width/2, mode.height/2 - 120, text='HELP PAGE', font='Arial 20 bold') 
-        canvas.create_text(mode.width/2, mode.height/2 - 90, text='* press r to restart') 
-        canvas.create_text(mode.width/2, mode.height/2 - 60, text='* press h to access/leave help page')
-        canvas.create_text(mode.width/2, mode.height/2 - 30, text='* click once to put pen down') 
-        canvas.create_text(mode.width/2, mode.height/2 - 10 , text='and move mouse to draw.') 
-        canvas.create_text(mode.width/2, mode.height/2 + 20, text='* click again to lift pen up') 
-        canvas.create_text(mode.width/2, mode.height/2 + 40, text='and stop drawing.') 
-        canvas.create_text(mode.width/2, mode.height/2 + 70, text='* you have 1 pen per level!') 
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
 
     def keyPressed(mode, event):
         if event.key == 'h':
             mode.app.setActiveMode(mode.app.gameMode)
-<<<<<<< HEAD
         if event.key == 'd':
             mode.app.setActiveMode(mode.app.drawingMode)
-=======
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
 
 class MyModalApp(ModalApp):
     def appStarted(app):
@@ -424,9 +271,6 @@ class MyModalApp(ModalApp):
         app.gameMode = GameMode()
         app.helpMode = HelpMode()
         app.setActiveMode(app.splashScreenMode)
-<<<<<<< HEAD
         app.drawingMode = DrawingMode()
-=======
->>>>>>> 194569ba89b62a7c5e6fca202743985728523151
 
 app = MyModalApp(width=500, height=500)
