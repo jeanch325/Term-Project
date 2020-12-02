@@ -26,8 +26,22 @@ class DrawingMode(Mode):
         mode.penDown = False
         mode.draw = []
         mode.mouseMovedDelay = 0
-    
+        mode.penType = 'pen'
+        mode.colors = [['red3', 'red', 'tomato'], 
+                        ['dark orange', 'orange', 'gold'], 
+                        ['yellow', 'goldenrod3', 'olive drab'], 
+                        ['dark green', 'lime green','green'], 
+                        ['aquamarine2', 'SteelBlue1', 'dodger blue'], 
+                        ['blue', 'medium blue', 'navy'], 
+                        ['SlateBlue3', 'purple3',  'purple'], 
+                        ['DarkOrchid3', 'magenta2', 'VioletRed2'], 
+                        ['maroon1', 'PaleVioletRed1', 'hot pink'], 
+                        ['black', 'gray23','gray62'], 
+                        ['gray85', 'white', 'saddlebrown'], 
+                        ['sienna4', 'sienna1', 'navajo white']]
+
     # grid code from https://www.cs.cmu.edu/~112/notes/notes-animations-part1.html#exampleGrids
+
     def getCell(mode, x, y):
         # aka "viewToModel"
         # return (row, col) in which (x, y) occurred or (-1, -1) if outside grid.
@@ -58,17 +72,49 @@ class DrawingMode(Mode):
         y0 = mode.margin + row * cellHeight
         y1 = mode.margin + (row+1) * cellHeight
         return (x0, y0, x1, y1)
-        
+    
+    def getColorCellBounds(mode, r, c):
+        # aka "modelToView"
+        # returns (x0, y0, x1, y1) corners/bounding box of given cell in grid
+        gridWidth  = mode.margin
+        gridHeight = 400
+        cellWidth = gridWidth / len(mode.colors[0])
+        cellHeight = gridHeight / len(mode.colors)
+        x0 = c * cellWidth
+        x1 = (c+1) * cellWidth
+        y0 = mode.margin + r * cellHeight
+        y1 = mode.margin + (r+1) * cellHeight
+        return (x0, y0, x1, y1)
+
     def mousePressed(mode, event): 
-        mode.penDown = not mode.penDown
-        if mode.penDown:
-            x1, y1 = event.x, event.y
-            mode.draw.append((x1, y1))
+        x1, y1 = event.x, event.y
+        if (0 < x1 < 100) and (y1 > 100):
+             row = (y1 - 100) // 33
+             col = x1 // 33
+             mode.color = mode.colors[row][col]
+             print(mode.color)
+        else:
+            mode.penDown = not mode.penDown
+            if mode.penDown:
+                if mode.penType == 'pen':
+                    mode.draw.append((x1, y1))
+                elif mode.penType == 'eraser':
+                    # find the cell that the x,y coord is in and remove it but HOW
+                    for point in mode.draw:
+                        x, y = point
+                        if (abs(x1-x) < 16) and (abs(y1-y) < 16):
+                            mode.draw.remove(point)
 
     def mouseMoved(mode, event):
         if mode.penDown:
-            x, y = event.x, event.y
-            mode.draw.append((x, y))
+            x1, y1 = event.x, event.y
+            if mode.penType == 'pen':
+                mode.draw.append((x1, y1))
+            elif mode.penType == 'eraser':
+                for point in mode.draw:
+                    x, y = point
+                    if (abs(x1-x) < 16) and (abs(y1-y) < 16):
+                        mode.draw.remove(point)
 
     def checkPoint(mode, x, y, x0, y0, x1, y1):
         sizex = abs(x0 - x1)
@@ -78,20 +124,31 @@ class DrawingMode(Mode):
 
     def redrawAll(mode, canvas):
         font = 'Arial 20 bold'
-        drawing = 'Drawing'
-        canvas.create_text(10, 10, text=drawing, 
-                                font='Arial 20 bold', anchor=NW)
-        click = '1. click "s" to save character\n2. click enter to begin game\n'
-        canvas.create_text(mode.width - 10, 10, 
-                        text=click, font='Arial 15', anchor=NE)
+        drawing = PhotoImage(file='drawing.png')
+        canvas.create_image(0, 0, image=drawing, anchor=NW)
+        canvas.create_rectangle(100, 0, mode.width, 100, fill='black')
+        canvas.create_rectangle(105, 7, mode.width-8, 95, fill='white')
+        canvas.create_text(120, 10, text='press "e" for eraser', font='Arial 15', anchor=NW)
+        canvas.create_text(120, 30, text='pick colors on left', font='Arial 15', anchor=NW)
+        canvas.create_text(120, 50, text='press "s" to save', font='Arial 15', anchor=NW)
+        canvas.create_text(120, 70, text='press "enter" to play', font='Arial 15', anchor=NW)
+        canvas.create_text(290, 10, text='click once to place pen down,', font='Arial 15', anchor=NW)
+        canvas.create_text(290, 30, text='click again to lift pen up', font='Arial 15', anchor=NW)
 
+        # colors            
+        for r in range(len(mode.colors)):
+            for c in range(len(mode.colors[0])):
+                (x0, y0, x1, y1) = mode.getColorCellBounds(r, c)
+                canvas.create_rectangle(x0, y0, x1, y1, fill=mode.colors[r][c], width=1)
+
+        # drawing grid
         for row in range(mode.rows):
             for col in range(mode.cols):
                 (x0, y0, x1, y1) = mode.getCellBounds(row, col)
                 for point in mode.draw:
                     x, y = point
                     if mode.checkPoint(x, y, x0, y0, x1, y1):
-                        canvas.create_rectangle(x0, y0, x1, y1, fill=mode.color, width=1)
+                        canvas.create_rectangle(x0, y0, x1, y1, fill=mode.color, width=0)
 
     def keyPressed(mode, event):
         if event.key == 'h':
@@ -101,6 +158,11 @@ class DrawingMode(Mode):
         elif event.key == 's':
             # save and uplad image
             pass
+        elif event.key == 'e':
+            mode.penType = 'eraser'
+        elif event.key == 'p':
+            mode.penType = 'pen'
+        
 
 
 class GameMode(Mode):
@@ -179,7 +241,7 @@ class GameMode(Mode):
     def makeBlocks(mode):
         # small Blocks:
         setUpBlocks(mode.sBlockW, mode.sBlockH, mode.level)
-        # small Blocks:
+        # long Blocks:
         setUpBlocks(mode.lBlockW, mode.lBlockH, mode.level)
 
         # draw blocks
@@ -207,7 +269,31 @@ class GameMode(Mode):
             time.sleep = (0.5)
             return mode.recursive(chickenPath[1:])
 
-    def timerFired(mode):
+    def timerFired(mode): #non recursive
+        print(mode.chickenPath)
+        chickenr = mode.chickenSize // 2
+        if mode.go:
+            if len(mode.chickenPath) == 0 and mode.onSurface == False:
+                mode.chickenPath = mode.checkSurface(mode.makeLine, chickenr)
+                # call for s blocks and l blocks
+            if mode.onSurface:
+                if len(mode.chickenPath) == 0:
+                    mode.onSurface = False
+                    mode.chickenx += mode.dx
+                else:
+                    mode.chickenx =  mode.chickenPath[0][0]
+       	            mode.chickeny = (mode.chickenPath[0][1] - mode.chickenSize)
+                    mode.chickenPath.pop(0)
+
+            else:
+                mode.chickeny += mode.dy
+                if (mode.chickeny + mode.chickenSize) >= mode.height:
+                    mode.chickeny = mode.height - mode.chickenSize
+                    mode.chickenx += mode.dx
+                if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
+                    mode.dx = -mode.dx
+
+    '''def timerFired(mode): # recursive
         chickenr = mode.chickenSize // 2
         if mode.go:
             mode.chickenPath = mode.checkSurface(mode.makeLine, chickenr)
@@ -217,12 +303,12 @@ class GameMode(Mode):
                 mode.onSurface = False
             else:
                 mode.chickeny += mode.dy
-                print(mode.chickeny)
+                
                 if (mode.chickeny + mode.chickenSize) >= mode.height:
                     mode.chickeny = mode.height - mode.chickenSize
                     mode.chickenx += mode.dx
                 if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
-                    mode.dx = -mode.dx
+                    mode.dx = -mode.dx'''
 
 
     def redrawAll(mode, canvas):
@@ -233,7 +319,6 @@ class GameMode(Mode):
                 canvas.create_line(x1, y1, x2, y2, width=7)
         chicken = PhotoImage(file='chicken.png')
         canvas.create_image(mode.chickenx, mode.chickeny, image=chicken, anchor=NW)
-
         # why doesn't this work
         for block in mode.blocks:
             (x0, y0, x1, y1) = block
