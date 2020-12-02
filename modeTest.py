@@ -207,12 +207,14 @@ class GameMode(Mode):
         if event.key == 'h':
             mode.penDown = False
             mode.app.setActiveMode(mode.app.helpMode)
-        elif not mode.go and event.key == 'd':
-            mode.app.setActiveMode(mode.app.drawingMode)
         elif event.key == 'r':
             mode.makeLine.clear()
             
-    def mousePressed(mode, event): 
+    def mousePressed(mode, event):
+        if ((mode.width-110) < event.x < (mode.width-10) and
+            10 < event.y < 110):
+            mode.app.setActiveMode(mode.app.drawingMode)
+
         if mode.newLevel:
             mode.go = True
             mode.penDown = not mode.penDown
@@ -317,6 +319,10 @@ class GameMode(Mode):
 
 
     def redrawAll(mode, canvas):
+        # drawing mode button
+        drawing = PhotoImage(file='drawing.png')
+        canvas.create_image(mode.width-10, 10, image=drawing, anchor=NE)
+
         for i in range(1, len(mode.makeLine) - 1):
             if mode.makeLine[i + 1] != None:
                 x1, y1 = mode.makeLine[i]
