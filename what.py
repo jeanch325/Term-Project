@@ -19,13 +19,26 @@ image1 = Image.new("RGB", (width, height), white)
 draw = ImageDraw.Draw(image1)
 
 # do the Tkinter canvas drawings (visible)
-cv.create_line([0, center, width, center], fill='green')
+for row in range(mode.rows):
+    for col in range(mode.cols):
+        (x0, y0, x1, y1) = mode.getCellBounds(row, col)
+        for point in mode.draw:
+            x, y, color = point
+            if mode.checkPoint(x, y, x0, y0, x1, y1):
+                canvas.create_rectangle(x0, y0, x1, y1, fill=color, width=0)
+                rgbColor = PIL.ImageColor.getrgb(color)
+                ImageDraw.polygon([(x0, y0), (x1, y1)], fill=rgbColor, outline=None)
 
 # do the PIL image/draw (in memory) drawings
-draw.line([0, center, width, center], green)
-
+for row in range(mode.rows):
+    for col in range(mode.cols):
+        (x0, y0, x1, y1) = mode.getCellBounds(row, col)
+        for point in mode.draw:
+            x, y, color = point
+            rgbColor = PIL.ImageColor.getrgb(color)
+            if mode.checkPoint(x, y, x0, y0, x1, y1):
+                ImageDraw.polygon([(x0, y0), (x1, y1)], fill=rgbColor, outline=None)
 # PIL image can be saved as .png .jpg .gif or .bmp file (among others)
 filename = "my_drawing.jpg"
 image1.save(filename)
 
-root.mainloop()
