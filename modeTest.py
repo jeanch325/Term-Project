@@ -25,6 +25,7 @@ class DrawingMode(Mode):
         mode.color = 'black'
         mode.penDown = False
         mode.draw = []
+        mode.mouseMovedDelay = 0
     
     # grid code from https://www.cs.cmu.edu/~112/notes/notes-animations-part1.html#exampleGrids
     def getCell(mode, x, y):
@@ -55,7 +56,7 @@ class DrawingMode(Mode):
         x0 = mode.margin + col * cellWidth
         x1 = mode.margin + (col+1) * cellWidth
         y0 = mode.margin + row * cellHeight
-        y1 = mode.margin + (row+2) * cellHeight
+        y1 = mode.margin + (row+1) * cellHeight
         return (x0, y0, x1, y1)
         
     def mousePressed(mode, event): 
@@ -63,9 +64,6 @@ class DrawingMode(Mode):
         if mode.penDown:
             x1, y1 = event.x, event.y
             mode.draw.append((x1, y1))
-        else:
-            if len(mode.draw) > 0:
-                print(mode.draw)
 
     def mouseMoved(mode, event):
         if mode.penDown:
@@ -73,8 +71,9 @@ class DrawingMode(Mode):
             mode.draw.append((x, y))
 
     def checkPoint(mode, x, y, x0, y0, x1, y1):
-        size = abs(x0 - x1)
-        if (abs(x0 - x) < size and abs(x1 - x) < size and abs(y0 - y) < size and abs(y1 - y) < size): 
+        sizex = abs(x0 - x1)
+        sizey = abs(y0 - y1)
+        if (abs(x0 - x) < sizex and abs(x1 - x) < sizex and abs(y0 - y) < sizey and abs(y1 - y) < sizey): 
             return True
 
     def redrawAll(mode, canvas):
@@ -89,11 +88,9 @@ class DrawingMode(Mode):
         for row in range(mode.rows):
             for col in range(mode.cols):
                 (x0, y0, x1, y1) = mode.getCellBounds(row, col)
-                size = abs(x0 - x1)
                 for point in mode.draw:
                     x, y = point
                     if mode.checkPoint(x, y, x0, y0, x1, y1):
-                        print(x, y, x0, y0, x1, y1)
                         canvas.create_rectangle(x0, y0, x1, y1, fill=mode.color, width=1)
 
     def keyPressed(mode, event):
