@@ -146,6 +146,13 @@ class DrawingMode(Mode):
                 canvas.create_rectangle(x0, y0, x1, y1, fill=mode.colors[r][c], width=1)
 
         # drawing grid
+        '''for row in range(mode.rows):
+            for col in range(mode.cols):
+                (x0, y0, x1, y1) = mode.getCellBounds(row, col)
+                for point in mode.draw:
+                    x, y, color = point
+                    if mode.checkPoint(x, y, x0, y0, x1, y1):
+                        canvas.create_rectangle(x0, y0, x1, y1, fill=color, width=0)'''
         for row in range(mode.rows):
             for col in range(mode.cols):
                 (x0, y0, x1, y1) = mode.getCellBounds(row, col)
@@ -153,6 +160,8 @@ class DrawingMode(Mode):
                     x, y, color = point
                     if mode.checkPoint(x, y, x0, y0, x1, y1):
                         canvas.create_rectangle(x0, y0, x1, y1, fill=color, width=0)
+                        rgbColor = PIL.ImageColor.getrgb(color)
+                        ImageDraw.polygon([(x0, y0), (x1, y1)], fill=rgbColor, outline=None)
                 
 
     def keyPressed(mode, event):
@@ -207,12 +216,17 @@ class GameMode(Mode):
         if event.key == 'h':
             mode.penDown = False
             mode.app.setActiveMode(mode.app.helpMode)
-        elif not mode.go and event.key == 'd':
-            mode.app.setActiveMode(mode.app.drawingMode)
         elif event.key == 'r':
+            mode.chickenx = 5
+            mode.chickeny = 5
             mode.makeLine.clear()
+            mode.newLevel = True
+            mode.go = False
             
     def mousePressed(mode, event): 
+        if ((mode.width-110) < event.x < (mode.width-10) and
+            (mode.height-110) < event.y < (mode.height-10)):
+            mode.app.setActiveMode(mode.app.drawingMode)
         if mode.newLevel:
             mode.go = True
             mode.penDown = not mode.penDown
@@ -315,15 +329,23 @@ class GameMode(Mode):
                 if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
                     mode.dx = -mode.dx'''
 
-
+    def drawChicken(mode, canvas):
+        char = PhotoImage(file=mode.chicken)
+        canvas.create_image(mode.chickenx, mode.chickeny, image=char, anchor=NW)
+        
     def redrawAll(mode, canvas):
+
+        # drawing button for drawing mode
+        drawing = PhotoImage(file='drawing.png')
+        canvas.create_image(mode.width-10, 10, image=drawing, anchor=NE)
+
         for i in range(1, len(mode.makeLine) - 1):
             if mode.makeLine[i + 1] != None:
                 x1, y1 = mode.makeLine[i]
                 x2, y2 = mode.makeLine[i + 1]
                 canvas.create_line(x1, y1, x2, y2, width=7)
-        char = PhotoImage(file=mode.chicken)
-        canvas.create_image(mode.chickenx, mode.chickeny, image=char, anchor=NW)
+        
+        mode.drawChicken(canvas)
         
         # why doesn't this work
         for block in mode.blocks:
