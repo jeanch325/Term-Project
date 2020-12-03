@@ -195,15 +195,17 @@ class GameMode(Mode):
         mode.chickenSize = 50
         mode.chickenr = 25
         mode.dx = 7
-        mode.dy = 10 
+        mode.dy = 20
 
         mode.go = False
-        mode.onSurface = False
 
         mode.i = 0
 
         mode.timerDelay = 50
 
+        mode.onLine = False
+
+        mode.currentBlockIndex = 0
         mode.sBlockW = 100
         mode.sBlockH = 74
         mode.lBlockW = 200
@@ -225,8 +227,8 @@ class GameMode(Mode):
             mode.makeLine.clear()
             mode.newLevel = True
             mode.go = False
-            mode.chickenx = 5
-            mode.chickeny = 5
+            mode.chickenx = 50
+            mode.chickeny = 50
             
     def mousePressed(mode, event):
         if ((mode.width-110) < event.x < (mode.width-10) and
@@ -248,7 +250,7 @@ class GameMode(Mode):
             mode.makeLine.append((x, y))
 
     def setUpBlocks(mode, blockW, blockH, level):
-        for i in range(5):
+        for i in range(1):
             x0 = random.randrange(100, mode.width-blockW)
             y0 = random.randrange(0, mode.height-blockH)
             x1 = x0 + blockW
@@ -271,138 +273,91 @@ class GameMode(Mode):
 
         # draw blocks
     
-    def checkSurface(mode, surfaceList, chickenr):
-        # helper for move(mode, chickenPath)
-        for point in surfaceList:
-            x, y = point
-            # checking if chicken's position is above and in x, y range of surface
-            if abs(y - (mode.chickeny + chickenr)) <= (mode.chickenSize + mode.dy): 
-                if abs(x - (mode.chickenx + chickenr)) <= (mode.chickenSize + mode.dx):
-                   mode.chickenPath.append((x, y))
-        if len(mode.chickenPath) != 0:
-            mode.onSurface = True
-        return mode.chickenPath
-
-    def recursive(mode, chickenPath):
-        if len(chickenPath) == 0:
-            mode.onSurface = False
-            mode.chickenx += mode.dx
-            return
-        else:
-            mode.chickenx =  chickenPath[0][0]
-            mode.chickeny = (chickenPath[0][1] - mode.chickenSize)
-            time.sleep = (0.5)
-            return mode.recursive(chickenPath[1:])
-
-    '''def timerFired(mode): #non recursive
-        #print(mode.chickenPath)
-        chickenr = mode.chickenSize // 2
-        if mode.go:
-            if len(mode.chickenPath) == 0 and mode.onSurface == False:
-                mode.chickenPath = mode.checkSurface(mode.makeLine, chickenr)
-
-                # call for s blocks and l blocks
-            if mode.onSurface:
-                if len(mode.chickenPath) == 0:
-                    mode.onSurface = False
-                    mode.chickenx += mode.dx
-                else:
-                    mode.chickenx =  mode.chickenPath[0][0]
-       	            mode.chickeny = (mode.chickenPath[0][1] - mode.chickenSize)
-                    mode.chickenPath.pop(0)
-
-            else:
-                mode.chickeny += mode.dy
-                if (mode.chickeny + mode.chickenSize) >= mode.height:
-                    mode.chickeny = mode.height - mode.chickenSize
-                    mode.chickenx += mode.dx
-                if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
-                    mode.dx = -mode.dx'''
-
-    '''def timerFired(mode): # recursive
-        chickenr = mode.chickenSize // 2
-        if mode.go:
-            mode.chickenPath = mode.checkSurface(mode.makeLine, chickenr)
-            # call for s blocks and l blocks
-            if mode.onSurface:
-                mode.recursive(mode.chickenPath)
-                mode.onSurface = False
-            else:
-                mode.chickeny += mode.dy
-                
-                if (mode.chickeny + mode.chickenSize) >= mode.height:
-                    mode.chickeny = mode.height - mode.chickenSize
-                    mode.chickenx += mode.dx
-                if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
-                    mode.dx = -mode.dx'''
-
-    '''def checkBlock(mode, direction):
-        # works with timerFired
-        if direction > 0:
-            for block in mode.blocks:
-                x0, y0, x1, y1 = block
-                if (mode.chickenx >= x0 and 
-                    mode.chickenx + mode.chickenSize <= x1):
-                    if (y0 <= mode.chickeny + mode.chickenSize <= y1):
-                        return (True, y0)
-            
-
-    def checkEndOfBlock(mode):
-        # works with timerFired
-        print('checking')
-        for block in mode.blocks:
-            x0, y0, x1, y1 = block
-            if ((mode.chickenx + mode.chickenSize <= x1) and 
-                (y0 <= mode.chickeny + mode.chickenSize <= y1)):
-                return x1
-
-    def checkLine(mode, direction):
-        # works with timerFired
+    def checkLine(mode):
+        # checks to see if chicken is within range of the line
+        cx, cy = mode.chickenx, mode.chickeny
+        r = mode.chickenr
         for point in mode.makeLine:
             x, y = point
-            if direction > 0: # moving right
-                # checking if chicken's position is above and in x, y range of surface
-                if ((mode.chickenx < x < mode.chickenx + mode.chickenSize) and
-                    (mode.chickeny <= y <= mode.chickeny + mode.chickenSize)):
-                    return True
-            else: # moving left
-                if (((x - mode.chickenx ) < mode.dx) and
-                    ((y - mode.chickeny) < mode.dy)):
-                    return True
-        return False
-                
+            if abs(x - cx) < r and abs(y - cy) < r:
+                mode.onLine = True
+                mode.i = mode.makeLine.index(point)
+                return True
 
-    def timerFired(mode): # hmmm
-        if mode.go:
-            if mode.checkBlock(mode.dx):
-                print('if')
-                mode.chickeny = mode.checkBlock(mode.dx)[1] + mode.chickenSize
-                mode.chickenx += mode.dx 
-            elif mode.checkLine(mode.dx):
-                print('on line')
-                mode.chickenx = mode.makeLine[mode.i][0] 
-                mode.chickeny = mode.makeLine[mode.i][1] - mode.chickenSize
-                if mode.i < len(mode.makeLine) - 1:
-                    mode.i += 1
-                else:
-                    mode.chickenx += mode.dx
+
+    def moveOnLine(mode, index): # moves from point to point on line
+        if mode.dx > 0: # moving right
+            if index + 1 <= len(mode.makeLine):
+                mode.chickenx = mode.makeLine[index][0]
+                mode.chickeny = mode.makeLine[index][1] - mode.chickenr
+                mode.i += 1
             else:
-                print('else')
-                mode.chickeny += mode.dy 
-                if (mode.chickeny + mode.chickenSize) >= mode.height:
-                        mode.chickeny = mode.height - mode.chickenSize
+                mode.chickenx += mode.chickenr
+                mode.chickeny += mode.dy
+                mode.onLine = False
+        else: # moving left
+            if index - 1 >= 0:
+                mode.chickenx = mode.makeLine[index][0]
+                mode.chickeny = mode.makeLine[index][1] - mode.chickenr
+                mode.i -= 1
+            else:
+                mode.chickenx -= mode.chickenr
+                mode.chickeny += mode.dy
+                mode.onLine = False
+
+    def checkBlock(mode):
+        '''
+        if right edge of chicken is greater than left edge of block
+        if left edge of chicken is less than right edge of block
+        if bottom of chicken is between the top and bottom of the block
+        # or if the bottom of the chicken is equal to the top of the block
+        '''
+        rightEdge = mode.chickenx + mode.chickenr
+        leftEdge = mode.chickenx - mode.chickenr 
+        bottomEdge = mode.chickeny + mode.chickenr
+        for block in mode.blocks:
+            x0, y0, x1, y1 = block
+            if rightEdge > x0 and leftEdge < x1:
+                if y1 > bottomEdge >= y0:
+                    mode.chickeny = y0 - mode.chickenr
+                    mode.onBlock = True
+                    mode.currentBlockIndex = mode.blocks.index(block)
+                    return True
+
+    def moveOnBlock(mode):
+        mode.chickenx += mode.dx
+        block = mode.blocks[mode.currentBlockIndex]
+        x0, y0, x1, y1 = block
+        
+        if mode.dx > 0 and mode.chickenx + mode.chickenr >= x1:
+            mode.onBlock = False
+        elif mode.dx < 0 and mode.chickenx - mode.chickenr <= x0:
+            mode.onBlock = False
+
+
+    def timerFired(mode):
+        if mode.go:
+            if mode.onLine or mode.checkLine():# 2 conditionals so checkLine() isnt always called
+                mode.moveOnLine(mode.i)
+            elif mode.onBlock or mode.checkBlock():
+                mode.moveOnBlock()
+            else: # gravity
+                mode.chickeny += mode.dy
+                mode.i = 0
+                if (mode.chickeny + mode.chickenr) >= mode.height:
+                        mode.chickeny = mode.height - mode.chickenr
                         mode.chickenx += mode.dx
-                if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
-                        mode.dx = -mode.dx'''
+            if (mode.chickenx - mode.chickenr < 0) or ((mode.chickenx + mode.chickenr) > mode.width):
+                    mode.dx = -mode.dx
 
 
 
     def redrawAll(mode, canvas):
         # blocks
-        '''for block in mode.blocks:
+        for block in mode.blocks:
             (x0, y0, x1, y1) = block
             shortBlock = PhotoImage(file='short-block.png')
-            canvas.create_image(x0, y0, image=shortBlock)'''
+            canvas.create_image(x0, y0, image=shortBlock, anchor = NW)
 
         #  mode button
         drawing = PhotoImage(file='drawing.png')
