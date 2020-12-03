@@ -18,6 +18,7 @@ class SplashScreenMode(Mode):
 
 class DrawingMode(Mode):
     def appStarted(mode):
+        mode.sprite = set()
         mode.margin = 100
         mode.cols = 25
         mode.rows = 25
@@ -116,13 +117,34 @@ class DrawingMode(Mode):
                     if (abs(x1-x) < 16) and (abs(y1-y) < 16):
                         mode.draw.remove(point)
 
+    def keyPressed(mode, event):
+        if event.key == 'h':
+            mode.app.setActiveMode(mode.app.helpMode)
+        elif event.key == 'Enter':
+            mode.app.setActiveMode(mode.app.gameMode)
+        elif event.key == 's':
+            mode.exportSprite()
+            mode.app.gameMode.s = mode.sprite
+            #mode.app.gameMode.chicken = 'newcharacter.png'
+        elif event.key == 'e':
+            mode.penType = 'eraser'
+        elif event.key == 'p':
+            mode.penType = 'pen'
+
     def checkPoint(mode, x, y, x0, y0, x1, y1):
         sizex = abs(x0 - x1)
         sizey = abs(y0 - y1)
         if (abs(x0 - x) < sizex and abs(x1 - x) < sizex and abs(y0 - y) < sizey and abs(y1 - y) < sizey): 
             return True
 
-
+    def exportSprite(mode):
+        for row in range(mode.rows):
+            for col in range(mode.cols):
+                (x0, y0, x1, y1) = mode.getCellBounds(row, col)
+                for point in mode.draw:
+                    x, y, color = point
+                    if mode.checkPoint(x, y, x0, y0, x1, y1):
+                        mode.sprite.add((row, col, color))
 
     def redrawAll(mode, canvas):
         # drawing logo
@@ -155,18 +177,6 @@ class DrawingMode(Mode):
                         canvas.create_rectangle(x0, y0, x1, y1, fill=color, width=0)
                 
 
-    def keyPressed(mode, event):
-        if event.key == 'h':
-            mode.app.setActiveMode(mode.app.helpMode)
-        elif event.key == 'Enter':
-            mode.app.setActiveMode(mode.app.gameMode)
-        elif event.key == 's':
-            mode.app.gameMode.chicken = 'newcharacter.png'
-        elif event.key == 'e':
-            mode.penType = 'eraser'
-        elif event.key == 'p':
-            mode.penType = 'pen'
-        
 
 
 class GameMode(Mode):
@@ -179,29 +189,33 @@ class GameMode(Mode):
         mode.mouseMovedDelay = 0
 
         mode.chicken = 'chicken.png'
-        mode.chickenx = 5
-        mode.chickeny = 5
+        mode.s = set()
+        mode.chickenx = 50
+        mode.chickeny = 50
         mode.chickenSize = 50
-        mode.direction = 'right'
+        mode.chickenr = 25
         mode.dx = 7
-        mode.dy = 5 
+        mode.dy = 10 
 
         mode.go = False
         mode.onSurface = False
 
         mode.i = 0
 
+        mode.timerDelay = 50
+
         mode.sBlockW = 100
         mode.sBlockH = 74
         mode.lBlockW = 200
-        mode.sBlockH = 74
+        mode.lBlockH = 74
         mode.level = 1
         mode.blocks = []
 
+        mode.onBlock = False
         mode.chickenPath = []
         
 
-
+        mode.makeBlocks()
 
     def keyPressed(mode, event):
         if event.key == 'h':
@@ -218,15 +232,15 @@ class GameMode(Mode):
         if ((mode.width-110) < event.x < (mode.width-10) and
             10 < event.y < 110):
             mode.app.setActiveMode(mode.app.drawingMode)
-
-        if mode.newLevel:
-            mode.go = True
-            mode.penDown = not mode.penDown
-            if mode.penDown:
-                x1, y1 = event.x, event.y
-                mode.makeLine.append((x1, y1))
-            if not mode.penDown and len(mode.makeLine) != 0:
-                mode.newLevel = False
+        else:
+            if mode.newLevel:
+                mode.go = True
+                mode.penDown = not mode.penDown
+                if mode.penDown:
+                    x1, y1 = event.x, event.y
+                    mode.makeLine.append((x1, y1))
+                if not mode.penDown and len(mode.makeLine) != 0:
+                    mode.newLevel = False
 
     def mouseMoved(mode, event):
         if mode.penDown:
@@ -234,9 +248,9 @@ class GameMode(Mode):
             mode.makeLine.append((x, y))
 
     def setUpBlocks(mode, blockW, blockH, level):
-        for i in range(level):
-            x0 = random.randrange(mode.width-blockW)
-            y0 = random.randrange(mode.height-blockH)
+        for i in range(5):
+            x0 = random.randrange(100, mode.width-blockW)
+            y0 = random.randrange(0, mode.height-blockH)
             x1 = x0 + blockW
             y1 = y0 + blockH
             newBlock = (x0, y0, x1, y1)
@@ -251,9 +265,9 @@ class GameMode(Mode):
 
     def makeBlocks(mode):
         # small Blocks:
-        setUpBlocks(mode.sBlockW, mode.sBlockH, mode.level)
+        mode.setUpBlocks(mode.sBlockW, mode.sBlockH, mode.level)
         # long Blocks:
-        setUpBlocks(mode.lBlockW, mode.lBlockH, mode.level)
+        #mode.setUpBlocks(mode.lBlockW, mode.lBlockH, mode.level)
 
         # draw blocks
     
@@ -280,12 +294,13 @@ class GameMode(Mode):
             time.sleep = (0.5)
             return mode.recursive(chickenPath[1:])
 
-    def timerFired(mode): #non recursive
+    '''def timerFired(mode): #non recursive
         #print(mode.chickenPath)
         chickenr = mode.chickenSize // 2
         if mode.go:
             if len(mode.chickenPath) == 0 and mode.onSurface == False:
                 mode.chickenPath = mode.checkSurface(mode.makeLine, chickenr)
+
                 # call for s blocks and l blocks
             if mode.onSurface:
                 if len(mode.chickenPath) == 0:
@@ -302,7 +317,7 @@ class GameMode(Mode):
                     mode.chickeny = mode.height - mode.chickenSize
                     mode.chickenx += mode.dx
                 if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
-                    mode.dx = -mode.dx
+                    mode.dx = -mode.dx'''
 
     '''def timerFired(mode): # recursive
         chickenr = mode.chickenSize // 2
@@ -321,25 +336,91 @@ class GameMode(Mode):
                 if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
                     mode.dx = -mode.dx'''
 
+    '''def checkBlock(mode, direction):
+        # works with timerFired
+        if direction > 0:
+            for block in mode.blocks:
+                x0, y0, x1, y1 = block
+                if (mode.chickenx >= x0 and 
+                    mode.chickenx + mode.chickenSize <= x1):
+                    if (y0 <= mode.chickeny + mode.chickenSize <= y1):
+                        return (True, y0)
+            
+
+    def checkEndOfBlock(mode):
+        # works with timerFired
+        print('checking')
+        for block in mode.blocks:
+            x0, y0, x1, y1 = block
+            if ((mode.chickenx + mode.chickenSize <= x1) and 
+                (y0 <= mode.chickeny + mode.chickenSize <= y1)):
+                return x1
+
+    def checkLine(mode, direction):
+        # works with timerFired
+        for point in mode.makeLine:
+            x, y = point
+            if direction > 0: # moving right
+                # checking if chicken's position is above and in x, y range of surface
+                if ((mode.chickenx < x < mode.chickenx + mode.chickenSize) and
+                    (mode.chickeny <= y <= mode.chickeny + mode.chickenSize)):
+                    return True
+            else: # moving left
+                if (((x - mode.chickenx ) < mode.dx) and
+                    ((y - mode.chickeny) < mode.dy)):
+                    return True
+        return False
+                
+
+    def timerFired(mode): # hmmm
+        if mode.go:
+            if mode.checkBlock(mode.dx):
+                print('if')
+                mode.chickeny = mode.checkBlock(mode.dx)[1] + mode.chickenSize
+                mode.chickenx += mode.dx 
+            elif mode.checkLine(mode.dx):
+                print('on line')
+                mode.chickenx = mode.makeLine[mode.i][0] 
+                mode.chickeny = mode.makeLine[mode.i][1] - mode.chickenSize
+                if mode.i < len(mode.makeLine) - 1:
+                    mode.i += 1
+                else:
+                    mode.chickenx += mode.dx
+            else:
+                print('else')
+                mode.chickeny += mode.dy 
+                if (mode.chickeny + mode.chickenSize) >= mode.height:
+                        mode.chickeny = mode.height - mode.chickenSize
+                        mode.chickenx += mode.dx
+                if (mode.chickenx < 0) or ((mode.chickenx + mode.chickenSize) > mode.width):
+                        mode.dx = -mode.dx'''
+
+
 
     def redrawAll(mode, canvas):
-        # drawing mode button
+        # blocks
+        '''for block in mode.blocks:
+            (x0, y0, x1, y1) = block
+            shortBlock = PhotoImage(file='short-block.png')
+            canvas.create_image(x0, y0, image=shortBlock)'''
+
+        #  mode button
         drawing = PhotoImage(file='drawing.png')
         canvas.create_image(mode.width-10, 10, image=drawing, anchor=NE)
-
+        
+        # line
         for i in range(1, len(mode.makeLine) - 1):
             if mode.makeLine[i + 1] != None:
                 x1, y1 = mode.makeLine[i]
                 x2, y2 = mode.makeLine[i + 1]
                 canvas.create_line(x1, y1, x2, y2, width=7)
+        # chicken
         char = PhotoImage(file=mode.chicken)
-        canvas.create_image(mode.chickenx, mode.chickeny, image=char, anchor=NW)
+        canvas.create_image(mode.chickenx, mode.chickeny, image=char)
+
         
-        # why doesn't this work
-        for block in mode.blocks:
-            (x0, y0, x1, y1) = block
-            shortBlock = PhotoImage(file='short-block.png')
-            canvas.create_image(x0, y0, image=shortBlock)
+        
+        
  
 class HelpMode(Mode):
     def redrawAll(mode, canvas):
