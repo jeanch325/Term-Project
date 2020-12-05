@@ -202,6 +202,7 @@ class GameMode(Mode):
     def appStarted(mode):
         mode.penDown = False
 
+        mode.clearScreen = False
         mode.makeLine = []
         mode.newLevel = True
         mode.progress = False
@@ -209,12 +210,13 @@ class GameMode(Mode):
         mode.muffinx = 0
         mode.muffiny = 0
         mode.chicken = 'chicken.png'
-        mode.chickenx = 50
-        mode.chickeny = 50
+        mode.chickenx = 300
+        mode.chickeny = 300
         mode.chickenSize = 50
         mode.chickenr = 25
         mode.dx = 7
         mode.dy = 20
+        mode.offScreen = -100
 
         mode.mouseMovedDelay = 0
         mode.go = False    
@@ -233,8 +235,16 @@ class GameMode(Mode):
         mode.onBlock = False
         mode.chickenPath = []
 
+        # side scrolling
+        mode.x0 = mode.y0 = mode.x1 = mode.y1 = 0
+        mode.tempBlocks = mode.blocks
+        mode.stickerOn = False
+
         mode.makeBlocks()
         mode.makeMuffin()
+
+
+    # def newLevel(mode):
 
 
     def keyPressed(mode, event):
@@ -287,22 +297,21 @@ class GameMode(Mode):
     def makeBlocks(mode):
         # small Blocks:
         mode.setUpBlocks(mode.sBlockW, mode.sBlockH, mode.level)
+        mode.tempBlocks = mode.blocks
         # long Blocks:
         #mode.setUpBlocks(mode.lBlockW, mode.lBlockH, mode.level)
 
-        # draw blocks
-
-    def setUpMuffins(mode, muffinr):
+    def setUpMuffin(mode, muffinr):
         x = random.randint(100, mode.width - 100)
         y = random.randint(100, mode.height - 100)
         if mode.width-100 < x < mode.width and 0 < y < 100:
-            mode.setUpMuffins(muffinr)
+            mode.setUpMuffin(muffinr)
         else:
             mode.muffinx = x
             mode.muffiny = y
 
     def makeMuffin(mode):
-        mode.setUpMuffins(mode.chickenr)
+        mode.setUpMuffin(mode.chickenr)
     
     def checkLine(mode):
         # checks to see if chicken is within range of the line
@@ -322,6 +331,15 @@ class GameMode(Mode):
         if (abs(cx - mx) <= (2*r)) and (abs(cy - my) <= (2*r)):
             return True
 
+    def checkForVert(mode):
+        #nx,ny = new x, new y
+        x = mode.makeLine[index][0]
+        y = mode.makeLine[index][1]
+        nx = mode.makeLine[index + 1][0]
+        ny = mode.makeLine[index + 1][1]
+        if abs(ny - y) > 2 * abs(nx - x):
+            return True # true means vertical   
+                
 
     def moveOnLine(mode, index): # moves from point to point on line
         if mode.dx > 0: # moving right
@@ -342,6 +360,7 @@ class GameMode(Mode):
                 mode.chickenx -= mode.chickenr
                 mode.chickeny += mode.dy
                 mode.onLine = False
+        
 
     def checkBlock(mode):
         '''
@@ -371,17 +390,22 @@ class GameMode(Mode):
             mode.onBlock = False
         elif mode.dx < 0 and mode.chickenx - mode.chickenr <= x0:
             mode.onBlock = False
-
+   
 
     def timerFired(mode):
         if mode.go:
             if mode.checkMuffin():
                 # moving muffin off screen
-                mode.muffinx = -100
-                mode.muffiny = -100
+                mode.muffinx = mode.offScreen
+                mode.muffiny = mode.offScreen
                 mode.progress = True
             if mode.onLine or mode.checkLine():# 2 conditionals so checkLine() isnt always called
                 mode.moveOnLine(mode.i)
+
+                '''# vertical lines
+                if mode.i != 0 and mode.i + 1 < len(mode.makeLine):
+                    if mode.checkForVert:
+                        print('vert')'''
             elif mode.onBlock or mode.checkBlock():
                 mode.moveOnBlock()
             else: # gravity
@@ -392,13 +416,44 @@ class GameMode(Mode):
                         mode.chickenx += mode.dx
             if (mode.chickenx - mode.chickenr < 0) or ((mode.chickenx + mode.chickenr) > mode.width):
                     mode.dx = -mode.dx
+        # sidescrolling
+        if mode.progress:
+            if mode.clearScreen == False:
+                if mode.chickenx != mode.offScreen: # next level !!!!! sticker
+                    mode.stickerOn = True
+                else:
+                    mode.stickerOn = False
+                mode.chickenx = mode.offScreen
+                mode.chickeny = mode.offScreen
+                
+                mode.moveOffScreen()
+
+    def moveOffScreen(mode):
+        # side scrolling for blocks
+        for block in mode.tempBlocks:
+            x0, y0, x1, y1 = block
+            x0 += 5
+            x1 += 5
+
+
+            
 
     def redrawAll(mode, canvas):
         # blocks
-        for block in mode.blocks:
-            (x0, y0, x1, y1) = block
-            shortBlock = PhotoImage(file='short-block.png')
-            canvas.create_image(x0, y0, image=shortBlock, anchor = NW)
+        if not mode.progress:
+            for block in mode.blocks:
+                (x0, y0, x1, y1) = block
+                shortBlock = PhotoImage(file='short-block.png')
+                canvas.create_image(x0, y0, image=shortBlock, anchor = NW)
+        # side scrolling
+        else:
+            for block in mode.tempBlocks:
+                (x0, y0, x1, y1) = block
+                shortBlock = PhotoImage(file='short-block.png')
+                canvas.create_image(x0, y0, image=shortBlock, anchor = NW)
+        if mode.stickerOn:
+            canvas.create_rectangle(mode.width/2 -20, mode.height/2 -10, mode.width/2 +20, mode.height/2 +10, fill='blue')
+            canvas.create_text(mode.width/2, mode.height/2, text='NEXT', fill='white')
 
         #  mode button
         drawing = PhotoImage(file='drawing.png')
@@ -419,9 +474,8 @@ class GameMode(Mode):
         muffin = PhotoImage(file='muffin.png')
         canvas.create_image(mode.muffinx, mode.muffiny, image=muffin)
 
-        if mode.progress:
-            print('yay')
-            # make a new 
+        # if mode.progress:
+            
 
 
         
