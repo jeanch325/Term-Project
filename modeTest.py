@@ -1,7 +1,6 @@
 from cmu_112_graphics import *
 import random
 import time
-from PIL import Image, ImageDraw, ImageColor
 
 
 # mode class structure is from https://www.cs.cmu.edu/~112/notes/notes-animations-part3.html#subclassingModalApp
@@ -17,9 +16,9 @@ class SplashScreenMode(Mode):
         if event.key == 'Enter':
             mode.app.setActiveMode(mode.app.gameMode)
 
-
 class DrawingMode(Mode):
     def appStarted(mode):
+        mode.sprite = set()
         mode.margin = 100
         mode.cols = 25
         mode.rows = 25
@@ -29,23 +28,18 @@ class DrawingMode(Mode):
         mode.draw = []
         mode.mouseMovedDelay = 0
         mode.penType = 'pen'
-        # list of colors from https://stackoverflow.com/questions/732192/get-tk-winfo-rgb-without-having-a-window-instantiated
-        mode.colors = [['#CD0000', '#FF0000', '#FF6347'], 
-                        ['#FF8C00', '#FFA500', '#FFD700'], 
-                        ['#FFFF00', '#CD9B1D', '#6B8E23'], 
-                        ['#006400', '#32CD32', '#00FF00'], 
-                        ['#76EEC6', '#63B8FF', '#1E90FF'], 
-                        ['#0000FF', '#0000CD', '#000080'], 
-                        ['#6959CD', '#7D26CD', '#A020F0'], 
-                        ['#9A32CD', '#EE00EE', '#EE3A8C'], 
-                        ['#FF34B3', '#FF82AB', '#FF69B4'], 
-                        ['#000000', '#3B3B3B', '#9E9E9E'], 
-                        ['#D9D9D9', '#FFFFFF', '#8B1A1A'], 
-                        ['#8B4726', '#FF8247', '#FFDEAD']]
-
-        mode.newDrawing = True
-        mode.spriteImage = None
-        mode.startSpriteDrawing = None
+        mode.colors = [['red3', 'red', 'tomato'], 
+                        ['dark orange', 'orange', 'gold'], 
+                        ['yellow', 'goldenrod3', 'olive drab'], 
+                        ['dark green', 'lime green','green'], 
+                        ['aquamarine2', 'SteelBlue1', 'dodger blue'], 
+                        ['blue', 'medium blue', 'navy'], 
+                        ['SlateBlue3', 'purple3',  'purple'], 
+                        ['DarkOrchid3', 'magenta2', 'VioletRed2'], 
+                        ['maroon1', 'PaleVioletRed1', 'hot pink'], 
+                        ['black', 'gray23','gray62'], 
+                        ['gray85', 'white', 'saddlebrown'], 
+                        ['sienna4', 'sienna1', 'navajo white']]
 
 
     # grid code from https://www.cs.cmu.edu/~112/notes/notes-animations-part1.html#exampleGrids
@@ -95,17 +89,6 @@ class DrawingMode(Mode):
         return (x0, y0, x1, y1)
 
     def mousePressed(mode, event): 
-
-        # creating new image for sprite
-        # from https://stackoverflow.com/questions/9886274/how-can-i-convert-canvas-content-to-an-image
-        if mode.newDrawing == True:
-            mode.spriteImage = Image.new("RGB", (mode.width, mode.height), (0, 0, 0, 0))
-            # putalpha is transparency. code from https://note.nkmk.me/en/python-pillow-putalpha/ 
-            mode.spriteImage.putalpha(0)
-            mode.startSpriteDrawing = ImageDraw.Draw(mode.spriteImage)
-            mode.newDrawing = False
- 
-        # drawing lines
         x1, y1 = event.x, event.y
         if (0 < x1 < 100) and (y1 > 100):
              row = (y1 - 100) // 33
@@ -141,21 +124,12 @@ class DrawingMode(Mode):
             mode.app.setActiveMode(mode.app.gameMode)
         elif event.key == 's':
             mode.exportSprite()
+            mode.app.gameMode.s = mode.sprite
+            #mode.app.gameMode.chicken = 'newcharacter.png'
         elif event.key == 'e':
             mode.penType = 'eraser'
         elif event.key == 'p':
             mode.penType = 'pen'
-    
-    def exportSprite(mode):
-        # image crop code: https://stackoverflow.com/questions/9983263/how-to-crop-an-image-using-pil 
-
-        sprite = mode.spriteImage.crop((100, 100, mode.width, mode.height)) 
-
-        # image thumbnail code: https://www.geeksforgeeks.org/python-pil-image-thumbnail-method/        
-        sprite.thumbnail((50, 50)) 
-        filename = "newcharacter.png"
-        sprite.save(filename)
-        mode.app.gameMode.chicken = 'newcharacter.png'
 
     def checkPoint(mode, x, y, x0, y0, x1, y1):
         sizex = abs(x0 - x1)
@@ -163,6 +137,14 @@ class DrawingMode(Mode):
         if (abs(x0 - x) < sizex and abs(x1 - x) < sizex and abs(y0 - y) < sizey and abs(y1 - y) < sizey): 
             return True
 
+    def exportSprite(mode):
+        for row in range(mode.rows):
+            for col in range(mode.cols):
+                (x0, y0, x1, y1) = mode.getCellBounds(row, col)
+                for point in mode.draw:
+                    x, y, color = point
+                    if mode.checkPoint(x, y, x0, y0, x1, y1):
+                        mode.sprite.add((row, col, color))
 
     def redrawAll(mode, canvas):
         # drawing logo
@@ -178,7 +160,6 @@ class DrawingMode(Mode):
         canvas.create_text(120, 70, text='press "enter" to play', font='Arial 15', anchor=NW)
         canvas.create_text(290, 10, text='click once to place pen down,', font='Arial 15', anchor=NW)
         canvas.create_text(290, 30, text='click again to lift pen up', font='Arial 15', anchor=NW)
-        canvas.create_text(290, 50, text='fill drawing to edges of canvas!', font='Arial 15', anchor=NW)
 
         # color picker            
         for r in range(len(mode.colors)):
@@ -194,8 +175,8 @@ class DrawingMode(Mode):
                     x, y, color = point
                     if mode.checkPoint(x, y, x0, y0, x1, y1):
                         canvas.create_rectangle(x0, y0, x1, y1, fill=color, width=0)
-                        rgbColor = ImageColor.getrgb(color)
-                        mode.startSpriteDrawing.rectangle([(x0, y0), (x1, y1)], fill=rgbColor)
+                
+
 
 
 class GameMode(Mode):
@@ -205,22 +186,31 @@ class GameMode(Mode):
         mode.clearScreen = False
         mode.makeLine = []
         mode.newLevel = True
-        mode.progress = False
 
-        mode.muffinx = 0
-        mode.muffiny = 0
+        mode.mouseMovedDelay = 0
+
         mode.chicken = 'chicken.png'
+<<<<<<< HEAD
         mode.chickenx = 300
         mode.chickeny = 300
+=======
+        mode.s = set()
+        mode.chickenx = 50
+        mode.chickeny = 50
+>>>>>>> parent of e8b0c62... sacing character, muffin, blocks
         mode.chickenSize = 50
         mode.chickenr = 25
         mode.dx = 7
         mode.dy = 20
         mode.offScreen = -100
 
-        mode.mouseMovedDelay = 0
-        mode.go = False    
+        mode.go = False
+
+        mode.i = 0
+
         mode.timerDelay = 50
+
+        mode.onLine = False
 
         mode.currentBlockIndex = 0
         mode.sBlockW = 100
@@ -230,10 +220,9 @@ class GameMode(Mode):
         mode.level = 1
         mode.blocks = []
 
-        mode.i = 0
-        mode.onLine = False
         mode.onBlock = False
         mode.chickenPath = []
+        
 
         # side scrolling
         mode.x0 = mode.y0 = mode.x1 = mode.y1 = 0
@@ -241,8 +230,6 @@ class GameMode(Mode):
         mode.stickerOn = False
 
         mode.makeBlocks()
-        mode.makeMuffin()
-
 
     # def newLevel(mode):
 
@@ -279,8 +266,8 @@ class GameMode(Mode):
 
     def setUpBlocks(mode, blockW, blockH, level):
         for i in range(1):
-            x0 = random.randint(0, mode.width-blockW - blockW)
-            y0 = random.randint(100, mode.height-blockH)
+            x0 = random.randrange(100, mode.width-blockW)
+            y0 = random.randrange(0, mode.height-blockH)
             x1 = x0 + blockW
             y1 = y0 + blockH
             newBlock = (x0, y0, x1, y1)
@@ -291,8 +278,7 @@ class GameMode(Mode):
                 if ((x0 in range(xRange) or x1 in range(xRange)) and
                     y0 in range(yRange) or y1 in range(yRange)):
                     mode.blocks.remove(newBlock)
-            if mode.width-100 < x1 < mode.width and 0 < y0 < 100:
-                mode.blocks.remove(newBlock)
+
 
     def makeBlocks(mode):
         # small Blocks:
@@ -301,6 +287,7 @@ class GameMode(Mode):
         # long Blocks:
         #mode.setUpBlocks(mode.lBlockW, mode.lBlockH, mode.level)
 
+<<<<<<< HEAD
     def setUpMuffin(mode, muffinr):
         x = random.randint(100, mode.width - 100)
         y = random.randint(100, mode.height - 100)
@@ -312,6 +299,9 @@ class GameMode(Mode):
 
     def makeMuffin(mode):
         mode.setUpMuffin(mode.chickenr)
+=======
+        # draw blocks
+>>>>>>> parent of e8b0c62... sacing character, muffin, blocks
     
     def checkLine(mode):
         # checks to see if chicken is within range of the line
@@ -324,6 +314,7 @@ class GameMode(Mode):
                 mode.i = mode.makeLine.index(point)
                 return True
 
+<<<<<<< HEAD
     def checkMuffin(mode):
         cx, cy = mode.chickenx, mode.chickeny
         mx, my = mode.muffinx, mode.muffiny
@@ -340,6 +331,8 @@ class GameMode(Mode):
         if abs(ny - y) > 2 * abs(nx - x):
             return True # true means vertical   
                 
+=======
+>>>>>>> parent of e8b0c62... sacing character, muffin, blocks
 
     def moveOnLine(mode, index): # moves from point to point on line
         if mode.dx > 0: # moving right
@@ -394,11 +387,14 @@ class GameMode(Mode):
 
     def timerFired(mode):
         if mode.go:
+<<<<<<< HEAD
             if mode.checkMuffin():
                 # moving muffin off screen
                 mode.muffinx = mode.offScreen
                 mode.muffiny = mode.offScreen
                 mode.progress = True
+=======
+>>>>>>> parent of e8b0c62... sacing character, muffin, blocks
             if mode.onLine or mode.checkLine():# 2 conditionals so checkLine() isnt always called
                 mode.moveOnLine(mode.i)
 
@@ -438,6 +434,8 @@ class GameMode(Mode):
 
             
 
+
+
     def redrawAll(mode, canvas):
         # blocks
         if not mode.progress:
@@ -465,11 +463,11 @@ class GameMode(Mode):
                 x1, y1 = mode.makeLine[i]
                 x2, y2 = mode.makeLine[i + 1]
                 canvas.create_line(x1, y1, x2, y2, width=7)
-       
         # chicken
         char = PhotoImage(file=mode.chicken)
         canvas.create_image(mode.chickenx, mode.chickeny, image=char)
 
+<<<<<<< HEAD
         # muffin
         muffin = PhotoImage(file='muffin.png')
         canvas.create_image(mode.muffinx, mode.muffiny, image=muffin)
@@ -478,7 +476,12 @@ class GameMode(Mode):
             
 
 
+=======
+>>>>>>> parent of e8b0c62... sacing character, muffin, blocks
         
+        
+        
+ 
 class HelpMode(Mode):
     def redrawAll(mode, canvas):
         loc = mode.height/2 - 140
@@ -504,7 +507,6 @@ class HelpMode(Mode):
         if event.key == 'd':
             mode.app.setActiveMode(mode.app.drawingMode)
 
-
 class MyModalApp(ModalApp):
     def appStarted(app):
         app.splashScreenMode = SplashScreenMode()
@@ -512,7 +514,6 @@ class MyModalApp(ModalApp):
         app.helpMode = HelpMode()
         app.setActiveMode(app.splashScreenMode)
         app.drawingMode = DrawingMode()
-
 
 def main():
     app = MyModalApp(width=500, height=500)
