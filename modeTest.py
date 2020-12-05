@@ -206,7 +206,7 @@ class GameMode(Mode):
         mode.chicken = 'chicken.png'
         mode.chickenSize = 50
         mode.chickenr = 10
-        mode.dx = -7
+        mode.dx = 7
         mode.dy = 20
         mode.offScreen = -100
 
@@ -237,7 +237,7 @@ class GameMode(Mode):
         mode.makeLine = []
         mode.newLevel = True
         mode.progress = False
-        mode.chickenx = mode.width-80
+        mode.chickenx = 80
         mode.chickeny = 350
         
         mode.currentBlockIndex = 0
@@ -369,7 +369,6 @@ class GameMode(Mode):
             x0, y0, x1, y1 = block
             if not (rightEdge+20 < x0 or leftEdge-20 > x1):
                 if  y0 <= bottomEdge < y1 :
-                    print(f'x0 : {x0}, x1 : {x1}, r: {rightEdge}, l: {leftEdge}')
                     mode.chickeny = y0 - mode.chickenr
                     mode.currentBlockIndex = mode.blocks.index(block)
                     return True
@@ -396,15 +395,10 @@ class GameMode(Mode):
         topEdge = mode.chickeny - 25
         bottomEdge = mode.chickeny + 25
         for block in mode.blocks:
-            print('block:', block)
-            print(f'x: {mode.chickenx}, y: {mode.chickeny}')
             x0, y0, x1, y1 = block
-            # abs(x0 - rightEdge) < mode.dx or 
-            if abs(x1 - leftEdge) < mode.dx:
+            if (mode.dx > 0 and abs(x0 - rightEdge) < mode.dx ) or (mode.dx < 0 and abs(x1 - leftEdge) < abs(mode.dx)):
                 if y0 <= topEdge <= y1 or y0 <= bottomEdge <= y1:
-                    #mode.chickenx += -mode.dx
                     mode.i = 0
-                    print('WALLLL')
                     return True
 
 
@@ -418,7 +412,7 @@ class GameMode(Mode):
                     mode.muffiny = mode.offScreen
                     mode.progress = True
                 if mode.onLine or mode.checkLine():# 2 conditionals so checkLine() isnt always called
-                    print('onLine')
+                    print('------LINE------')
                     mode.moveOnLine(mode.i)
                 elif mode.onBlock or mode.checkBlock():
                     print('----BLOCK----')
@@ -428,20 +422,16 @@ class GameMode(Mode):
                     mode.dx = -mode.dx
 
             else: # gravity
-                #print('gravity')
+                print('else')
                 mode.chickeny += mode.dy
                 mode.i = 0
                 if (mode.chickeny + mode.chickenr) >= mode.height:
-                    print('1')
-                    print(mode.chickenx)
                     mode.chickeny = mode.height - (.5 * mode.chickenSize)
                     mode.chickenx += mode.dx
                 if (mode.chickenx - mode.chickenr < 0):
-                    print('2')
                     mode.dx = 7
                     mode.i = 0
                 elif ((mode.chickenx + mode.chickenr) > mode.width):
-                    print('3')
                     mode.dx = -7
                     mode.i = 0
                 
