@@ -198,6 +198,7 @@ class DrawingMode(Mode):
                         
 
 
+# code w Kosbie 12/5/2020
 def distance(x1, y1, x2, y2):
     return (((x2-x1)**2 + (y2-y1)**2)** 0.5)
 
@@ -239,10 +240,7 @@ class GameMode(Mode):
 
         mode.sBlockW = 100
         mode.sBlockH = 74
-        mode.lBlockW = 200
-        mode.lBlockH = 74
-        mode.level = 1
-        mode.blocks = []
+        mode.level = 2
 
         mode.helpOn = True
 
@@ -250,20 +248,25 @@ class GameMode(Mode):
 
         mode.load()
 
-        mode.makeBlocks()
-        mode.makeMuffin()
+        
 
 
     def load(mode):
         # initializes game
+        mode.progress = False
+        mode.blocks = []
+        
+        mode.restart()
+        mode.placeBlocks()
+        mode.makeMuffin()
+
+    def restart(mode):
+        mode.newLevel = True
+        mode.makeLine = []
         mode.go = False
         mode.penDown = False
-        mode.makeLine = []
-        mode.newLevel = True
-        mode.progress = False
         mode.chickenx = 80
         mode.chickeny = 350
-        
         mode.currentBlockIndex = 0
         mode.i = 0
         mode.onLine = False
@@ -279,12 +282,7 @@ class GameMode(Mode):
             mode.penDown = False
             mode.helpOn = not mode.helpOn
         elif event.key == 'r':
-            mode.load()
-            '''mode.makeLine.clear()
-            mode.newLevel = True
-            mode.go = False
-            mode.chickenx = 70
-            mode.chickeny = 70'''
+            mode.restart()
             
     def mousePressed(mode, event):
         if ((mode.width-110) < event.x < (mode.width-10) and
@@ -292,12 +290,12 @@ class GameMode(Mode):
             mode.app.setActiveMode(mode.app.drawingMode)
         else:
             if mode.newLevel:
+                mode.go = True
                 mode.penDown = not mode.penDown
                 if mode.penDown:
                     x1, y1 = event.x, event.y
                     mode.makeLine.append((x1, y1))
                 if not mode.penDown: 
-                    mode.go = True
                     if len(mode.makeLine) != 0:
                         mode.newLevel = False
 
@@ -306,36 +304,38 @@ class GameMode(Mode):
             x, y = event.x, event.y
             mode.makeLine.append((x, y))
 
-    def setUpBlocks(mode, blockW, blockH, level):
+    # new blocks code
+    def getCellBoundsForBlocks(mode, row, col):
+        cellWidth = mode.width / mode.level
+        cellHeight = (mode.height-100) /mode.level
+        x0 = col * cellWidth
+        x1 = (col+1) * cellWidth
+        y0 = row * cellHeight + 100
+        y1 = (row+1) * cellHeight + 100
+        return (x0, y0, x1, y1)
 
-        mode.blocks = [(100, 100, 100 + blockW, 100 + blockH), (200, mode.height-blockH, 200+ blockW, mode.height), (150, 200, 120 + blockW, 200+blockH)]
-        '''for i in range(3):
-            x0 = random.randint(0, mode.width-blockW - blockW)
-            y0 = random.randint(100, mode.height-blockH)
-            x1 = x0 + blockW
-            y1 = y0 + blockH
-            newBlock = (x0, y0, x1, y1)
-            mode.blocks.append(newBlock)
-            for oldBlock in mode.blocks:
-                xRange = oldBlock[2] - oldBlock[0] 
-                yRange = oldBlock[3] - oldBlock[1]
-                if ((x0 in range(xRange) or x1 in range(xRange)) and
-                    y0 in range(yRange) or y1 in range(yRange)):
-                    mode.blocks.remove(newBlock)
-            if mode.width-100 < x1 < mode.width and 0 < y0 < 100:
-                mode.blocks.remove(newBlock)'''
+    def chooseBlocksFromList(mode):
+        midsList = []
+        for row in range(mode.level):
+            for col in range(mode.level):
+                (x0, y0, x1, y1) = mode.getCellBoundsForBlocks(row, col)
+                midsList.append((x0, y0, x1, y1))
+        return midsList
 
-    def makeBlocks(mode):
-        # small Blocks:
-        mode.setUpBlocks(mode.sBlockW, mode.sBlockH, mode.level)
-        mode.tempBlocks = mode.blocks
-        # long Blocks:
-        #mode.setUpBlocks(mode.lBlockW, mode.lBlockH, mode.level)
+    def placeBlocks(mode):
+        midsList = mode.chooseBlocksFromList()
+        for i in range(mode.level):
+            index = random.randrange(0, len(midsList))
+            if midsList[index] not in mode.blocks:
+                mode.blocks.append(midsList[index])
+
 
     def setUpMuffin(mode, muffinr):
-        x0, y0, x1, y1 = mode.blocks[0]
-        mode.muffinx = x1 - muffinr
-        mode.muffiny = y0 -muffinr
+        x0, y0, x1, y1 = mode.blocks[random.randrange(0, len(mode.blocks))]
+        midx = (x0 + x1) /2
+        midy = (y0 + y1) / 2
+        mode.muffinx = midx
+        mode.muffiny = midy - (50)
 
     def makeMuffin(mode):
         mode.setUpMuffin(mode.chickenr)
@@ -399,7 +399,11 @@ class GameMode(Mode):
         leftEdge = mode.chickenx 
         bottomEdge = mode.chickeny + mode.chickenr
         for block in mode.blocks:
-            x0, y0, x1, y1 = block
+            boundx0, boundy0, boundx1, boundy1 = block
+            x0 = (boundx0 + boundx1 - mode.sBlockW) /2 
+            x1 = (boundx0 + boundx1 + mode.sBlockW) /2 
+            y0 = (boundy0 + boundy1) / 2 - (mode.sBlockH/2)
+            y1 = (boundy0 + boundy1) / 2 + (mode.sBlockH/2)
             if not (rightEdge+20 < x0 or leftEdge-20 > x1):
                 if  y0 <= bottomEdge < y1 :
                     mode.chickeny = y0 - mode.chickenr
@@ -428,8 +432,12 @@ class GameMode(Mode):
         topEdge = mode.chickeny - 25
         bottomEdge = mode.chickeny + 25
         for block in mode.blocks:
-            x0, y0, x1, y1 = block
-            if (mode.dx > 0 and abs(x0 - rightEdge) < mode.dx ) or (mode.dx < 0 and abs(x1 - leftEdge) < abs(mode.dx)):
+            boundx0, boundy0, boundx1, boundy1 = block
+            x0 = (boundx0 + boundx1 - mode.sBlockW) /2 
+            x1 = (boundx0 + boundx1 + mode.sBlockW) /2 
+            y0 = (boundy0 + boundy1) / 2 - (mode.sBlockH/2)
+            y1 = (boundy0 + boundy1) / 2 + (mode.sBlockH/2)
+            if (mode.dx > 0 and abs(x0 - rightEdge) < 3 ) or (mode.dx < 0 and abs(x1 - leftEdge) < abs(3)):
                 if y0 <= topEdge <= y1 or y0 <= bottomEdge <= y1:
                     mode.i = 0
                     return True
@@ -443,7 +451,8 @@ class GameMode(Mode):
                     # moving muffin off screen
                     mode.muffinx = mode.offScreen
                     mode.muffiny = mode.offScreen
-                    mode.progress = True
+                    mode.level += 1
+                    mode.load()
                 if mode.onLine or mode.checkLine():# 2 conditionals so checkLine() isnt always called
                     print('------LINE------')
                     mode.moveOnLine(mode.i)
@@ -461,10 +470,10 @@ class GameMode(Mode):
                 if (mode.chickeny + mode.chickenr) >= mode.height:
                     mode.chickeny = mode.height - (.5 * mode.chickenSize)
                     mode.chickenx += mode.dx
-                if (mode.chickenx - mode.chickenr < 0):
+                if (mode.chickenx - (.5 * mode.chickenSize) < 0):
                     mode.dx = 7
                     mode.i = 0
-                elif ((mode.chickenx + mode.chickenr) > mode.width):
+                elif ((mode.chickenx + (.5 * mode.chickenSize)) > mode.width):
                     mode.dx = -7
                     mode.i = 0
                 
@@ -476,10 +485,12 @@ class GameMode(Mode):
         background = PhotoImage(file='background.png')
         canvas.create_image(mode.width/2, mode.height/2, image=background)
 
+        shortBlock = PhotoImage(file='short-block.png')
         for block in mode.blocks:
             (x0, y0, x1, y1) = block
-            shortBlock = PhotoImage(file='short-block.png')
-            canvas.create_image(x0, y0, image=shortBlock, anchor = NW)
+            midx = (x0 + x1) /2
+            midy = (y0 + y1) / 2
+            canvas.create_image(midx, midy, image=shortBlock)
 
         if mode.stickerOn:
             canvas.create_rectangle(mode.width/2 -20, mode.height/2 -10, mode.width/2 +20, mode.height/2 +10, fill='blue')
