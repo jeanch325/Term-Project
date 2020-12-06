@@ -198,6 +198,30 @@ class DrawingMode(Mode):
                         
 
 
+def distance(x1, y1, x2, y2):
+    return (((x2-x1)**2 + (y2-y1)**2)** 0.5)
+
+def lineSegmentIntersectsCircle(x0, y0, x1, y1, cx, cy, r):
+    if x1 == x0:
+        # they're the same point, so if point intersects circle
+        return distance(x0, y0, cx, cy) <= r
+    m = (y1 - y0) / (x1 - x0)
+    b = y0 - m*x0
+    # now we know the line is: y = mx + b
+    A = (1 + m**2)
+    B = -2*cx + 2*b*m - 2*cy*m
+    C = cx**2  + b**2  - 2*b*cy + cy**2 - r**2
+
+    if (B**2 - 4*A*C) < 0:
+        # (the entire line did not hit the circle)
+        return False
+
+    x2 = (-B + (B**2 - 4*A*C)**0.5) / (2*A)
+    x3 = (-B - (B**2 - 4*A*C)**0.5) / (2*A)
+    y2 = m*x2+b
+    y3 = m*x3+b
+    return (x0 <= x2 <= x1) or (x0 <= x3 <= x1)
+
 class GameMode(Mode):
     def appStarted(mode):
 
@@ -323,16 +347,25 @@ class GameMode(Mode):
         if (abs(cx - mx) <= (2*r)) and (abs(cy - my) <= (2*r)):
             return True
     
+
+
     def checkLine(mode):
+        if mode.makeLine == []:
+            return False
         # checks to see if chicken is within range of the line
         cx, cy = mode.chickenx, mode.chickeny
         r = mode.chickenr
+        prevx, prevy = mode.makeLine[0]
         for point in mode.makeLine:
             x, y = point
-            if abs(x - cx) < r and abs(y - cy) < r:
+            #if abs(x - cx) < r and abs(y - cy) < r:
+            #if distance(x, y, cx, cy) <= r:
+            if lineSegmentIntersectsCircle(prevx, prevy, x, y, cx, cy, r):
                 mode.onLine = True
                 mode.i = mode.makeLine.index(point)
-                return True                
+                return True  
+        return False
+
 
     def moveOnLine(mode, index): # moves from point to point on line
         if mode.dx > 0: # moving right
@@ -487,9 +520,6 @@ class GameMode(Mode):
             canvas.create_text(mode.width/2, mid+(loc * 3)-10, text='* you have 1 pen per level!') 
 
             
-
-
-        
 
 
 class MyModalApp(ModalApp):
