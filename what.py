@@ -1,44 +1,51 @@
-from tkinter import *
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageColor
+import time
+import tkinter as tk 
+from cmu_112_graphics import *
 
-width = 400
-height = 300
-center = height//2
-white = (255, 255, 255)
-green = (0,128,0)
+def appStarted(mode):
+    mode.bluex = mode.width/2
+    mode.purplex = mode.bluex - mode.width
+    mode.pinkx = mode.purplex - mode.width
 
-root = Tk()
+    mode.switchLevels = False
 
-# Tkinter create a canvas to draw on
-cv = Canvas(root, width=width, height=height, bg='white')
-cv.pack()
+def switchBackgrounds(mode):
+    if mode.bluex == 1.5 * mode.width:
+        mode.bluex = mode.pinkx - mode.width
+        mode.switchLevels = False
+    if mode.purplex == 1.5 * mode.width:
+        mode.purplex = mode.bluex - mode.width
+        mode.switchLevels = False
+    if mode.pinkx == 1.5 * mode.width:
+        mode.pinkx = mode.purplex - mode.width
+        mode.switchLevels = False
 
-# PIL create an empty image and draw object to draw on
-# memory only, not visible
-image1 = Image.new("RGB", (width, height), white)
-draw = ImageDraw.Draw(image1)
+def sideScroll(mode):
+    mode.bluex += 20
+    mode.purplex += 20
+    mode.pinkx += 20
+    mode.switchBackgrounds()
 
-# do the Tkinter canvas drawings (visible)
-for row in range(mode.rows):
-    for col in range(mode.cols):
-        (x0, y0, x1, y1) = mode.getCellBounds(row, col)
-        for point in mode.draw:
-            x, y, color = point
-            if mode.checkPoint(x, y, x0, y0, x1, y1):
-                canvas.create_rectangle(x0, y0, x1, y1, fill=color, width=0)
-                rgbColor = PIL.ImageColor.getrgb(color)
-                ImageDraw.polygon([(x0, y0), (x1, y1)], fill=rgbColor, outline=None)
+def timerFired(mode):
+    if mode.switchLevels:
+        mode.sideScroll()
 
-# do the PIL image/draw (in memory) drawings
-for row in range(mode.rows):
-    for col in range(mode.cols):
-        (x0, y0, x1, y1) = mode.getCellBounds(row, col)
-        for point in mode.draw:
-            x, y, color = point
-            rgbColor = PIL.ImageColor.getrgb(color)
-            if mode.checkPoint(x, y, x0, y0, x1, y1):
-                ImageDraw.polygon([(x0, y0), (x1, y1)], fill=rgbColor, outline=None)
-# PIL image can be saved as .png .jpg .gif or .bmp file (among others)
-filename = "my_drawing.jpg"
-image1.save(filename)
 
+def keyPressed(mode, event):
+    if event.key == 'Space':
+        mode.switchLevels = True
+    
+
+def redrawAll(mode, canvas):
+    blue = PhotoImage(file='blue.png')
+    canvas.create_image(mode.bluex, mode.height/2, image=blue)
+
+    purple = PhotoImage(file='purple.png')
+    canvas.create_image(mode.purplex, mode.height/2, image=purple)
+
+    pink = PhotoImage(file='pink.png')
+    canvas.create_image(mode.pinkx, mode.height/2, image=pink)
+    
+    
+runApp(width=500, height=500)

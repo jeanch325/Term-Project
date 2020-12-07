@@ -215,6 +215,7 @@ def lineSegmentIntersectsCircle(x0, y0, x1, y1, cx, cy, r):
 
     if (B**2 - 4*A*C) < 0:
         # (the entire line did not hit the circle)
+        print('2')
         return False
 
     x2 = (-B + (B**2 - 4*A*C)**0.5) / (2*A)
@@ -223,15 +224,29 @@ def lineSegmentIntersectsCircle(x0, y0, x1, y1, cx, cy, r):
     y3 = m*x3+b
     return (x0 <= x2 <= x1) or (x0 <= x3 <= x1)
 
+def findSlope(x1, y1, x2, y2):
+    rise = abs(y2 - y1)
+    run = abs(x2 - x1)
+    if run <= 0.1 and rise > 1:
+        return 100
+    return abs(rise/run)
+
 class GameMode(Mode):
     def appStarted(mode):
+
+        mode.bluex = mode.width/2
+        mode.purplex = mode.bluex - mode.width
+        mode.pinkx = mode.purplex - mode.width
+
+        mode.switchLevels = False
+
+        mode.verticalLineApproached = False
 
         mode.muffinx = 0
         mode.muffiny = 0
         mode.chicken = 'chicken.png'
         mode.chickenSize = 50
         mode.chickenr = 10
-        mode.dx = 7
         mode.dy = 20
         mode.offScreen = -100
 
@@ -244,12 +259,7 @@ class GameMode(Mode):
 
         mode.helpOn = True
 
-        mode.stickerOn = False
-
         mode.load()
-
-        
-
 
     def load(mode):
         # initializes game
@@ -272,6 +282,8 @@ class GameMode(Mode):
         mode.onLine = False
         mode.onBlock = False
         mode.chickenPath = []
+        mode.dx = 7
+
 
 
 
@@ -283,6 +295,8 @@ class GameMode(Mode):
             mode.helpOn = not mode.helpOn
         elif event.key == 'r':
             mode.restart()
+        elif event.key == 'Space':
+            mode.switchLevels = True
             
     def mousePressed(mode, event):
         if ((mode.width-110) < event.x < (mode.width-10) and
@@ -331,11 +345,26 @@ class GameMode(Mode):
 
 
     def setUpMuffin(mode, muffinr):
-        x0, y0, x1, y1 = mode.blocks[random.randrange(0, len(mode.blocks))]
-        midx = (x0 + x1) /2
-        midy = (y0 + y1) / 2
-        mode.muffinx = midx
-        mode.muffiny = midy - (50)
+        setUp = False
+        for block in mode.blocks:
+            boundx0, boundy0, boundx1, boundy1 = block
+            x0 = (boundx0 + boundx1 - mode.sBlockW) /2 
+            x1 = (boundx0 + boundx1 + mode.sBlockW) /2 
+            y0 = (boundy0 + boundy1) / 2 - (mode.sBlockH/2)
+            y1 = (boundy0 + boundy1) / 2 + (mode.sBlockH/2)
+            if x0 > mode.width/2:
+                midx = (x0 + x1) /2
+                midy = (y0 + y1) / 2
+                mode.muffinx = midx
+                mode.muffiny = midy - 50
+                setUp = True
+                break
+        if setUp == False:
+            x0, y0, x1, y1 = mode.blocks[random.randrange(0, len(mode.blocks))]
+            midx = (x0 + x1) /2
+            midy = (y0 + y1) / 2
+            mode.muffinx = midx
+            mode.muffiny = midy - (50)
 
     def makeMuffin(mode):
         mode.setUpMuffin(mode.chickenr)
@@ -347,6 +376,16 @@ class GameMode(Mode):
         if (abs(cx - mx) <= (2*r)) and (abs(cy - my) <= (2*r)):
             return True
     
+    def lineIsVertical(mode, index):
+        if index != (len(mode.makeLine) - 1):
+            x1, y1 = mode.makeLine[index]
+            x2, y2 = mode.makeLine[index+1]
+            slope = findSlope(x1, y1, x2, y2)
+            if slope > 7:
+                mode.verticalLineApproached = True
+                return True
+            else:
+                return False
 
 
     def checkLine(mode):
@@ -354,16 +393,17 @@ class GameMode(Mode):
             return False
         # checks to see if chicken is within range of the line
         cx, cy = mode.chickenx, mode.chickeny
-        r = mode.chickenr
+        r = 25
         prevx, prevy = mode.makeLine[0]
         for point in mode.makeLine:
             x, y = point
-            #if abs(x - cx) < r and abs(y - cy) < r:
-            #if distance(x, y, cx, cy) <= r:
             if lineSegmentIntersectsCircle(prevx, prevy, x, y, cx, cy, r):
-                mode.onLine = True
+                print('entered if statement')
                 mode.i = mode.makeLine.index(point)
-                return True  
+                if mode.lineIsVertical(mode.i) == False:
+                    mode.onLine = True
+                    return True  
+                    
         return False
 
 
@@ -386,7 +426,10 @@ class GameMode(Mode):
                 mode.chickenx -= mode.chickenr
                 mode.chickeny += mode.dy
                 mode.onLine = False
-        
+
+
+
+            
 
     def checkBlock(mode):
         '''
@@ -445,56 +488,75 @@ class GameMode(Mode):
 
     def timerFired(mode):
         if mode.go:
+            if (mode.chickenx - (.5 * mode.chickenSize) < 0):
+                    mode.dx = 7
+                    mode.i = 0
+            elif ((mode.chickenx + (.5 * mode.chickenSize)) > mode.width):
+                mode.dx = -7
+                mode.i = 0
             if mode.checkMuffin() or mode.onLine or mode.checkLine() or mode.onBlock or mode.checkBlock() or mode.checkWall():
                 if mode.checkMuffin():
-                    print('muffin')
-                    # moving muffin off screen
-                    mode.muffinx = mode.offScreen
-                    mode.muffiny = mode.offScreen
+                    mode.muffinx = -100
+                    mode.switchLevels = True
                     mode.level += 1
                     mode.load()
                 if mode.onLine or mode.checkLine():# 2 conditionals so checkLine() isnt always called
-                    print('------LINE------')
                     mode.moveOnLine(mode.i)
                 elif mode.onBlock or mode.checkBlock():
-                    print('----BLOCK----')
                     mode.moveOnBlock()
                 if mode.checkWall():
-                    print('HIT A WALL')
                     mode.dx = -mode.dx
 
             else: # gravity
-                print('else')
+                if mode.verticalLineApproached == True:
+                    mode.dx = -mode.dx
+                    mode.verticalLineApproached = False
                 mode.chickeny += mode.dy
                 mode.i = 0
                 if (mode.chickeny + mode.chickenr) >= mode.height:
                     mode.chickeny = mode.height - (.5 * mode.chickenSize)
                     mode.chickenx += mode.dx
-                if (mode.chickenx - (.5 * mode.chickenSize) < 0):
-                    mode.dx = 7
-                    mode.i = 0
-                elif ((mode.chickenx + (.5 * mode.chickenSize)) > mode.width):
-                    mode.dx = -7
-                    mode.i = 0
+                
+        if mode.switchLevels:
+            mode.sideScroll()
                 
 
-
+    def switchBackgrounds(mode):
+        if mode.bluex == 1.5 * mode.width:
+            mode.bluex = mode.pinkx - mode.width
+            mode.switchLevels = False
+        if mode.purplex == 1.5 * mode.width:
+            mode.purplex = mode.bluex - mode.width
+            mode.switchLevels = False
+        if mode.pinkx == 1.5 * mode.width:
+            mode.pinkx = mode.purplex - mode.width
+            mode.switchLevels = False
+    
+    def sideScroll(mode):
+        mode.bluex += 50
+        mode.purplex += 50
+        mode.pinkx += 50
+        mode.switchBackgrounds()
             
 
     def redrawAll(mode, canvas):
-        background = PhotoImage(file='background.png')
-        canvas.create_image(mode.width/2, mode.height/2, image=background)
+        # background
+        blue = PhotoImage(file='blue.png')
+        canvas.create_image(mode.bluex, mode.height/2, image=blue)
 
+        purple = PhotoImage(file='purple.png')
+        canvas.create_image(mode.purplex, mode.height/2, image=purple)
+
+        pink = PhotoImage(file='pink.png')
+        canvas.create_image(mode.pinkx, mode.height/2, image=pink)
+
+        # blocks
         shortBlock = PhotoImage(file='short-block.png')
         for block in mode.blocks:
             (x0, y0, x1, y1) = block
             midx = (x0 + x1) /2
             midy = (y0 + y1) / 2
             canvas.create_image(midx, midy, image=shortBlock)
-
-        if mode.stickerOn:
-            canvas.create_rectangle(mode.width/2 -20, mode.height/2 -10, mode.width/2 +20, mode.height/2 +10, fill='blue')
-            canvas.create_text(mode.width/2, mode.height/2, text='NEXT', fill='white')
 
         #  mode button
         drawing = PhotoImage(file='drawing.png')
