@@ -258,6 +258,7 @@ class GameMode(Mode):
         mode.sBlockW = 100
         mode.sBlockH = 74
         mode.level = 2
+        mode.youDiedOn = False
 
         mode.helpOn = True
 
@@ -286,7 +287,7 @@ class GameMode(Mode):
         mode.chickenPath = []
         mode.dx = 7
 
-
+ 
 
 
 
@@ -297,9 +298,9 @@ class GameMode(Mode):
             mode.helpOn = not mode.helpOn
         elif event.key == 'r':
             mode.restart()
-        '''
-        elif event.key == 'Space':
-            mode.chickeny += mode.dy'''
+        elif event.key == 'Enter' and mode.youDiedOn == True:
+            mode.youDiedOn = False
+            mode.restart()
             
     def mousePressed(mode, event):
         if ((mode.width-110) < event.x < (mode.width-10) and
@@ -415,8 +416,6 @@ class GameMode(Mode):
                 mode.chickeny = mode.makeLine[index][1] - mode.chickenr
                 mode.i += 1
             else:
-                #mode.chickenx += mode.chickenr
-                #mode.chickeny += mode.dy
                 mode.onLine = False
         else: # moving left
             if index - 1 >= 0:
@@ -424,8 +423,6 @@ class GameMode(Mode):
                 mode.chickeny = mode.makeLine[index][1] - mode.chickenr
                 mode.i -= 1
             else:
-                #mode.chickenx -= mode.chickenr
-                #mode.chickeny += mode.dy
                 mode.onLine = False
 
 
@@ -508,23 +505,21 @@ class GameMode(Mode):
                         mode.chickenx += mode.chickenr
                     elif mode.dx < 0:
                         mode.chickenx - mode.chickenr
-                    #mode.chickeny += mode.dy 
-                    print('on line')
                 elif mode.onBlock or mode.checkBlock():
                     mode.moveOnBlock()
                 if mode.checkWall():
                     mode.dx = -mode.dx
 
-            else: # gravity
-                print('else')
+            else: # 
                 if mode.verticalLineApproached == True:
                     mode.dx = -mode.dx
                     mode.verticalLineApproached = False
-                mode.chickeny += mode.dy
                 mode.i = 0
                 if (mode.chickeny + mode.chickenr) >= mode.height:
-                    mode.chickeny = mode.height - (.5 * mode.chickenSize)
-                    mode.chickenx += mode.dx
+                    modechickeny = mode.height - 2 * mode.chickenSize
+                    mode.youDiedOn = True
+                else:
+                    mode.chickeny += mode.dy
                 
         if mode.switchLevels:
             mode.sideScroll()
@@ -601,6 +596,14 @@ class GameMode(Mode):
             canvas.create_text(mode.width/2, mid+(loc * 2)-10, text='and stop drawing.') 
             canvas.create_text(mode.width/2, mid+(loc * 3)-10, text='* you have 1 pen per level!') 
 
+        # you died
+        if mode.youDiedOn == True:
+            youlost = PhotoImage(file='youlost.png')
+            canvas.create_image(mode.width/2, mode.height/2, image=youlost)
+            canvas.create_text(mode.width/2, mode.width/2 - 50, text='YOU LOST :(', font='Arial 35 bold') 
+            canvas.create_text(mode.width/2, mode.width/2 - 10 , text='press Enter to restart level', 
+                                                        font='Arial 15 bold') 
+            
             
 
 
