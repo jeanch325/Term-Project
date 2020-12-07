@@ -215,21 +215,23 @@ def lineSegmentIntersectsCircle(x0, y0, x1, y1, cx, cy, r):
 
     if (B**2 - 4*A*C) < 0:
         # (the entire line did not hit the circle)
-        print('2')
+        #print('2')
         return False
 
     x2 = (-B + (B**2 - 4*A*C)**0.5) / (2*A)
     x3 = (-B - (B**2 - 4*A*C)**0.5) / (2*A)
     y2 = m*x2+b
     y3 = m*x3+b
-    return (x0 <= x2 <= x1) or (x0 <= x3 <= x1)
+    return (x0 <= x2 <= x1) or (x0 <= x3 <= x1) or (x0 >= x2 >= x1) or (x0 >= x3 >= x1)
 
 def findSlope(x1, y1, x2, y2):
     rise = abs(y2 - y1)
     run = abs(x2 - x1)
-    if run <= 0.1 and rise > 1:
+    try:
+        return rise/run
+
+    except ZeroDivisionError:
         return 100
-    return abs(rise/run)
 
 class GameMode(Mode):
     def appStarted(mode):
@@ -275,8 +277,8 @@ class GameMode(Mode):
         mode.makeLine = []
         mode.go = False
         mode.penDown = False
-        mode.chickenx = 80
-        mode.chickeny = 350
+        mode.chickenx = 100
+        mode.chickeny = 100
         mode.currentBlockIndex = 0
         mode.i = 0
         mode.onLine = False
@@ -295,8 +297,9 @@ class GameMode(Mode):
             mode.helpOn = not mode.helpOn
         elif event.key == 'r':
             mode.restart()
+        '''
         elif event.key == 'Space':
-            mode.switchLevels = True
+            mode.chickeny += mode.dy'''
             
     def mousePressed(mode, event):
         if ((mode.width-110) < event.x < (mode.width-10) and
@@ -372,8 +375,7 @@ class GameMode(Mode):
     def checkMuffin(mode):
         cx, cy = mode.chickenx, mode.chickeny
         mx, my = mode.muffinx, mode.muffiny
-        r = mode.chickenr
-        if (abs(cx - mx) <= (2*r)) and (abs(cy - my) <= (2*r)):
+        if (abs(cx - mx) <= (mode.chickenSize)) and (abs(cy - my) <= (mode.chickenSize)):
             return True
     
     def lineIsVertical(mode, index):
@@ -398,13 +400,12 @@ class GameMode(Mode):
         for point in mode.makeLine:
             x, y = point
             if lineSegmentIntersectsCircle(prevx, prevy, x, y, cx, cy, r):
-                print('entered if statement')
                 mode.i = mode.makeLine.index(point)
                 if mode.lineIsVertical(mode.i) == False:
                     mode.onLine = True
                     return True  
-                    
         return False
+
 
 
     def moveOnLine(mode, index): # moves from point to point on line
@@ -414,8 +415,8 @@ class GameMode(Mode):
                 mode.chickeny = mode.makeLine[index][1] - mode.chickenr
                 mode.i += 1
             else:
-                mode.chickenx += mode.chickenr
-                mode.chickeny += mode.dy
+                #mode.chickenx += mode.chickenr
+                #mode.chickeny += mode.dy
                 mode.onLine = False
         else: # moving left
             if index - 1 >= 0:
@@ -423,8 +424,8 @@ class GameMode(Mode):
                 mode.chickeny = mode.makeLine[index][1] - mode.chickenr
                 mode.i -= 1
             else:
-                mode.chickenx -= mode.chickenr
-                mode.chickeny += mode.dy
+                #mode.chickenx -= mode.chickenr
+                #mode.chickeny += mode.dy
                 mode.onLine = False
 
 
@@ -489,8 +490,8 @@ class GameMode(Mode):
     def timerFired(mode):
         if mode.go:
             if (mode.chickenx - (.5 * mode.chickenSize) < 0):
-                    mode.dx = 7
-                    mode.i = 0
+                mode.dx = 7
+                mode.i = 0
             elif ((mode.chickenx + (.5 * mode.chickenSize)) > mode.width):
                 mode.dx = -7
                 mode.i = 0
@@ -502,12 +503,20 @@ class GameMode(Mode):
                     mode.load()
                 if mode.onLine or mode.checkLine():# 2 conditionals so checkLine() isnt always called
                     mode.moveOnLine(mode.i)
+                    mode.chickenx += mode.dx 
+                    if mode.dx > 0:
+                        mode.chickenx += mode.chickenr
+                    elif mode.dx < 0:
+                        mode.chickenx - mode.chickenr
+                    #mode.chickeny += mode.dy 
+                    print('on line')
                 elif mode.onBlock or mode.checkBlock():
                     mode.moveOnBlock()
                 if mode.checkWall():
                     mode.dx = -mode.dx
 
             else: # gravity
+                print('else')
                 if mode.verticalLineApproached == True:
                     mode.dx = -mode.dx
                     mode.verticalLineApproached = False
