@@ -16,20 +16,24 @@ class SplashScreenMode(Mode):
 
     def keyPressed(mode, event):
         if event.key == 'Enter':
-            print('hi')
             mode.app.setActiveMode(mode.app.instructionsMode)
 
 class InstructionsMode(Mode):
 
     def appStarted(mode):
-        print('hey')
         mode.screen1 = True
         mode.screen2 = False
         mode.screen3 = False
         mode.screen4 = False
 
+        mode.arrowx0 = 250
+        mode.arrowx1 = 260
+
+        mode.linex0 = 130
+        mode.linex1 = 140
+
     def keyPressed(mode, event):
-        if event.key == 'f':
+        if event.key == 'Right':
             if mode.screen1:
                 mode.screen1 = False
                 mode.screen2 = True
@@ -39,7 +43,9 @@ class InstructionsMode(Mode):
             elif mode.screen3:
                 mode.screen3 = False
                 mode.screen4 = True
-        elif event.key == 'b':
+            elif mode.screen4:
+                mode.app.setActiveMode(mode.app.gameMode)
+        elif event.key == 'Left':
             if mode.screen2:
                 mode.screen2 = False
                 mode.screen1 = True
@@ -49,8 +55,15 @@ class InstructionsMode(Mode):
             elif mode.screen4:
                 mode.screen4 = False
                 mode.screen3 = True
-        elif event.key == 'Enter' and mode.screen4 == True:
-            mode.app.setActiveMode(mode.app.gameMode)
+
+    def timerFired(mode):
+        mode.arrowx1 += 10
+        if mode.arrowx1 == 320:
+            mode.arrowx1 = 260
+        mode.linex1 += 10
+        if mode.linex1 == 370:
+            mode.linex1 = 140
+
 
     def redrawAll(mode, canvas):
         screen1 = PhotoImage(file='screen1.png')
@@ -61,17 +74,63 @@ class InstructionsMode(Mode):
 
         if mode.screen1 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen1)
+            canvas.create_text(mode.width/2, 100, 
+            text='         This is Bradley \nthe moonwalking chicken.', 
+            font='Arial 30 bold')
+            canvas.create_text(mode.width/2, mode.height-100, 
+            text='All Bradley wants to do \n      is to eat muffins.', 
+            font='Arial 30 bold')
+            canvas.create_text(mode.width/2, mode.height-50, 
+            text='(Use the arrow keys to mode to navigate between slides)', 
+            font='Arial 15 bold')
+
         if mode.screen2 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen2)
-
+            canvas.create_text(mode.width/2, 70, 
+            text='  Help him get to the muffin by \nusing your mouse to draw a line', 
+            font='Arial 20 bold')
+            canvas.create_text(mode.width/2, 105, 
+            text=' for him to walk on.', 
+            font='Arial 20 bold')
+            canvas.create_text(mode.width/2, 170, 
+            text='    You can draw lines by \nclicking and releasing once,', 
+            font='Arial 30 bold')
+            canvas.create_text(mode.width/2, 235, 
+            text='       dragging, and then \nclicking and releasing again', 
+            font='Arial 30 bold')
+            canvas.create_text(mode.width/2, 285, 
+            text='to finish drawing.', 
+            font='Arial 30 bold')
+            canvas.create_text(mode.width/2, 320, 
+            text='You only have 1 line per level!', 
+            font='Arial 30 bold')
+            canvas.create_line(mode.linex0, 400, mode.linex1, 400, width=15)
+            canvas.create_image(mode.linex1, 410, image=mouse)
 
         if mode.screen3 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen3)
-            canvas.create_image(0, mode.height - 125, image=screen3help)
+            canvas.create_image(127, mode.height - 125, image=screen3help)
+            canvas.create_text(mode.width/4, 290, 
+            text='If you\'re tired of Bradley,', 
+            font='Arial 18 bold')
+            canvas.create_text(mode.width/4, 330, 
+            text='you can create your own\ncharacter by switching to\ndrawing mode by clicking', 
+            font='Arial 18 bold')
+            canvas.create_text(mode.width/4, 395, 
+            text='the Drawing Mode button\n at the top right corner\n         of the screen!', 
+            font='Arial 18 bold')
+            canvas.create_text(mode.width/4, 440, 
+            text='Bradley will miss you :\'(', 
+            font='Arial 18 bold')
+            canvas.create_line(mode.arrowx0, 50, mode.arrowx1, 50, fill='red', width=10)
+            canvas.create_text(mode.arrowx1 - 3, 50, text ='>', 
+            font='Arial 30 bold', fill='red')
 
         if mode.screen4 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen4)
-
+            canvas.create_text(mode.width/2, 100, 
+            text='Press the Right Arrow key \n               to play!', 
+            font='Arial 30 bold')
 
     
             
@@ -358,6 +417,8 @@ class GameMode(Mode):
         elif event.key == 'Enter' and mode.youDiedOn == True:
             mode.youDiedOn = False
             mode.restart()
+        elif event.key == 'Left':
+            mode.app.setActiveMode(mode.app.instructionsMode)
             
     def mousePressed(mode, event):
         if ((mode.width-110) < event.x < (mode.width-10) and
