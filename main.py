@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw, ImageColor
 # mode class structure is from https://www.cs.cmu.edu/~112/notes/notes-animations-part3.html#subclassingModalApp
 
 class SplashScreenMode(Mode):
+    # welcome screen
     def redrawAll(mode, canvas):
         splash = PhotoImage(file='splash.png')
         canvas.create_image(mode.width/2, mode.height/2, image=splash)
@@ -19,7 +20,7 @@ class SplashScreenMode(Mode):
             mode.app.setActiveMode(mode.app.instructionsMode)
 
 class InstructionsMode(Mode):
-
+    # how to play
     def appStarted(mode):
         mode.screen1 = True
         mode.screen2 = False
@@ -57,6 +58,7 @@ class InstructionsMode(Mode):
                 mode.screen3 = True
 
     def timerFired(mode):
+        # animates arrow and line
         mode.arrowx1 += 10
         if mode.arrowx1 == 320:
             mode.arrowx1 = 260
@@ -128,6 +130,7 @@ class InstructionsMode(Mode):
             font='Arial 30 bold')
 
 class DrawingMode(Mode):
+    # drawing sprites
     def appStarted(mode):
         mode.margin = 100
         mode.cols = 25
@@ -159,7 +162,8 @@ class DrawingMode(Mode):
 
     # grid code from https://www.cs.cmu.edu/~112/notes/notes-animations-part1.html#exampleGrids
 
-    def getCell(mode, x, y):
+    def getCell(mode, x, y): # cell bounds for drawing
+
         # aka "viewToModel"
         # return (row, col) in which (x, y) occurred or (-1, -1) if outside grid.
         if (not mode.pointInGrid(x, y)):
@@ -306,9 +310,11 @@ class DrawingMode(Mode):
                         
 # code w Kosbie 12/5/2020
 def distance(x1, y1, x2, y2):
+     # used in GameMode
     return (((x2-x1)**2 + (y2-y1)**2)** 0.5)
 
 def lineSegmentIntersectsCircle(x0, y0, x1, y1, cx, cy, r):
+    # used in GameMode
     if x1 == x0:
         # they're the same point, so if point intersects circle
         return distance(x0, y0, cx, cy) <= r
@@ -330,6 +336,7 @@ def lineSegmentIntersectsCircle(x0, y0, x1, y1, cx, cy, r):
     return (x0 <= x2 <= x1) or (x0 <= x3 <= x1) or (x0 >= x2 >= x1) or (x0 >= x3 >= x1)
 
 def findSlope(x1, y1, x2, y2):
+    # used in GameMode
     rise = abs(y2 - y1)
     run = abs(x2 - x1)
     try:
@@ -339,6 +346,7 @@ def findSlope(x1, y1, x2, y2):
         return 100
 
 class GameMode(Mode):
+    # play the game
     def appStarted(mode):
 
         mode.bluex = mode.width/2
@@ -364,9 +372,6 @@ class GameMode(Mode):
         mode.sBlockH = 74
         mode.level = 2
         mode.youDiedOn = False
-
-        mode.helpOn = True
-
         mode.load()
 
     def load(mode):
@@ -392,16 +397,9 @@ class GameMode(Mode):
         mode.chickenPath = []
         mode.dx = 7
 
- 
-
-
-
 
     def keyPressed(mode, event):
-        if event.key == 'h':
-            mode.penDown = False
-            mode.helpOn = not mode.helpOn
-        elif event.key == 'r':
+        if event.key == 'r':
             mode.restart()
         elif event.key == 'Enter' and mode.youDiedOn == True:
             mode.youDiedOn = False
@@ -414,7 +412,7 @@ class GameMode(Mode):
             10 < event.y < 110):
             mode.app.setActiveMode(mode.app.drawingMode)
         else:
-            if mode.newLevel and mode.helpOn == False:
+            if mode.newLevel:
                 mode.go = True
                 mode.penDown = not mode.penDown
                 if mode.penDown:
@@ -517,6 +515,9 @@ class GameMode(Mode):
 
 
     def moveOnLine(mode, index): # moves from point to point on line
+        if mode.checkWall():
+            print('yes')
+            mode.dx = -mode.dx
         if mode.dx > 0: # moving right
             if index + 1 <= len(mode.makeLine):
                 mode.chickenx = mode.makeLine[index][0]
@@ -537,12 +538,7 @@ class GameMode(Mode):
             
 
     def checkBlock(mode):
-        '''
-        if right edge of chicken is greater than left edge of block
-        if left edge of chicken is less than right edge of block
-        if bottom of chicken is between the top and bottom of the block
-        # or if the bottom of the chicken is equal to the top of the block
-        '''
+        # checks if chicken on block
         rightEdge = mode.chickenx 
         leftEdge = mode.chickenx 
         bottomEdge = mode.chickeny + mode.chickenr
@@ -569,12 +565,7 @@ class GameMode(Mode):
             mode.onBlock = False
    
     def checkWall(mode):
-        '''
-        if distance from edges of chicken to edges of block < chickens radius
-        if left edge of chicken is less than right edge of block
-        if bottom of chicken is between the top and bottom of the block
-        # or if the bottom of the chicken is equal to the top of the block
-        '''
+        # checks if chicken hit a wall
         rightEdge = mode.chickenx + 25
         leftEdge = mode.chickenx - 25
         topEdge = mode.chickeny - 25
@@ -585,8 +576,8 @@ class GameMode(Mode):
             x1 = (boundx0 + boundx1 + mode.sBlockW) /2 
             y0 = (boundy0 + boundy1) / 2 - (mode.sBlockH/2)
             y1 = (boundy0 + boundy1) / 2 + (mode.sBlockH/2)
-            if (mode.dx > 0 and abs(x0 - rightEdge) < 3 ) or (mode.dx < 0 and abs(x1 - leftEdge) < abs(3)):
-                if y0 <= topEdge <= y1 or y0 <= bottomEdge <= y1:
+            if (mode.dx > 0 and abs(x0 - rightEdge) < 10) or (mode.dx < 0 and abs(x1 - leftEdge) < 10):
+                if (y0 < topEdge < y1 or y0 < bottomEdge < y1):
                     mode.i = 0
                     return True
 
@@ -605,17 +596,18 @@ class GameMode(Mode):
                     mode.switchLevels = True
                     mode.level += 1
                     mode.load()
-                if mode.onLine or mode.checkLine():# 2 conditionals so checkLine() isnt always called
+                if mode.onBlock or mode.checkBlock():
+                    mode.moveOnBlock()
+                if mode.checkWall():
+                    mode.dx = -mode.dx
+                elif mode.onLine or mode.checkLine():# 2 conditionals so checkLine() isnt always called
                     mode.moveOnLine(mode.i)
                     mode.chickenx += mode.dx 
                     if mode.dx > 0:
                         mode.chickenx += mode.chickenr
                     elif mode.dx < 0:
                         mode.chickenx - mode.chickenr
-                elif mode.onBlock or mode.checkBlock():
-                    mode.moveOnBlock()
-                if mode.checkWall():
-                    mode.dx = -mode.dx
+                
 
             else: # 
                 if mode.verticalLineApproached == True:
@@ -687,21 +679,6 @@ class GameMode(Mode):
         # muffin
         muffin = PhotoImage(file='muffin.png')
         canvas.create_image(mode.muffinx, mode.muffiny, image=muffin)
-
-        # help page
-        help = PhotoImage(file='help.png')
-        if mode.helpOn:
-            loc = 25
-            mid = mode.height/2
-            canvas.create_image(mode.width/2, mode.height/2, image=help)
-            canvas.create_text(mode.width/2, mid-(loc * 4), text='HELP PAGE', font='Arial 20 bold') 
-            canvas.create_text(mode.width/2, mid-(loc * 3), text='* press r to restart') 
-            canvas.create_text(mode.width/2, mid-(loc * 2), text='* press h to access/leave help page')
-            canvas.create_text(mode.width/2, mid-(loc), text='* click once to put pen down') 
-            canvas.create_text(mode.width/2, mid-5, text='and move mouse to draw.') 
-            canvas.create_text(mode.width/2, mid+(loc)-5, text='* click again to lift pen up') 
-            canvas.create_text(mode.width/2, mid+(loc * 2)-10, text='and stop drawing.') 
-            canvas.create_text(mode.width/2, mid+(loc * 3)-10, text='* you have 1 pen per level!') 
 
         # you died
         if mode.youDiedOn == True:
