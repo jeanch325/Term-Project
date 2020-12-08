@@ -16,11 +16,13 @@ class SplashScreenMode(Mode):
 
     def keyPressed(mode, event):
         if event.key == 'Enter':
+            print('hi')
             mode.app.setActiveMode(mode.app.instructionsMode)
 
 class InstructionsMode(Mode):
 
     def appStarted(mode):
+        print('hey')
         mode.screen1 = True
         mode.screen2 = False
         mode.screen3 = False
@@ -675,9 +677,9 @@ class MyModalApp(ModalApp):
     def appStarted(app):
         app.splashScreenMode = SplashScreenMode()
         app.gameMode = GameMode()
-        app.setActiveMode(app.splashScreenMode)
-        app.drawingMode = DrawingMode()
         app.instructionsMode = InstructionsMode()
+        app.drawingMode = DrawingMode()
+        app.setActiveMode(app.splashScreenMode)
 
 
 def main():
