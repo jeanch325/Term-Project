@@ -61,26 +61,17 @@ class InstructionsMode(Mode):
 
         if mode.screen1 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen1)
-
         if mode.screen2 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen2)
 
 
         if mode.screen3 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen3)
-            canvas.create_image(mode.width/2, mode.height/2, image=screen3help)
+            canvas.create_image(0, mode.height - 125, image=screen3help)
 
         if mode.screen4 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen4)
 
-
-
-    def redrawAll(mode, canvas):
-        splash = PhotoImage(file='splash.png')
-        canvas.create_image(mode.width/2, mode.height/2, image=splash)
-        canvas.create_text(mode.width/2, mode.height/2 - 80, text='WELCOME TO', font='Arial 50 bold')
-        canvas.create_text(mode.width/2, mode.height/2 - 30, text='CHICKEN HIKE', font='Arial 60 bold')
-        canvas.create_text(mode.width/2, mode.height/2 + 20, text='press enter to begin', font='Arial 20 bold')
 
     
             
