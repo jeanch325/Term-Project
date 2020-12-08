@@ -16,8 +16,72 @@ class SplashScreenMode(Mode):
 
     def keyPressed(mode, event):
         if event.key == 'Enter':
+            mode.app.setActiveMode(mode.app.instructionsMode)
+
+class InstructionsMode(Mode):
+
+    def appStarted(mode):
+        mode.screen1 = True
+        mode.screen2 = False
+        mode.screen3 = False
+        mode.screen4 = False
+
+    def keyPressed(mode, event):
+        if event.key == 'f':
+            if mode.screen1:
+                mode.screen1 = False
+                mode.screen2 = True
+            elif mode.screen2:
+                mode.screen2 = False
+                mode.screen3 = True
+            elif mode.screen3:
+                mode.screen3 = False
+                mode.screen4 = True
+        elif event.key == 'b':
+            if mode.screen2:
+                mode.screen2 = False
+                mode.screen1 = True
+            elif mode.screen3:
+                mode.screen3 = False
+                mode.screen2 = True
+            elif mode.screen4:
+                mode.screen4 = False
+                mode.screen3 = True
+        elif event.key == 'Enter' and mode.screen4 == True:
             mode.app.setActiveMode(mode.app.gameMode)
 
+    def redrawAll(mode, canvas):
+        screen1 = PhotoImage(file='screen1.png')
+        screen2 = PhotoImage(file='screen2.png')
+        screen3 = PhotoImage(file='screen3.png')
+        screen3help = PhotoImage(file='screen3-help.png')
+        screen4 = PhotoImage(file='screen4.png')
+
+        if mode.screen1 == True:
+            canvas.create_image(mode.width/2, mode.height/2, image=screen1)
+
+        if mode.screen2 == True:
+            canvas.create_image(mode.width/2, mode.height/2, image=screen2)
+
+
+        if mode.screen3 == True:
+            canvas.create_image(mode.width/2, mode.height/2, image=screen3)
+            canvas.create_image(mode.width/2, mode.height/2, image=screen3help)
+
+        if mode.screen4 == True:
+            canvas.create_image(mode.width/2, mode.height/2, image=screen4)
+
+
+
+    def redrawAll(mode, canvas):
+        splash = PhotoImage(file='splash.png')
+        canvas.create_image(mode.width/2, mode.height/2, image=splash)
+        canvas.create_text(mode.width/2, mode.height/2 - 80, text='WELCOME TO', font='Arial 50 bold')
+        canvas.create_text(mode.width/2, mode.height/2 - 30, text='CHICKEN HIKE', font='Arial 60 bold')
+        canvas.create_text(mode.width/2, mode.height/2 + 20, text='press enter to begin', font='Arial 20 bold')
+
+    
+            
 
 class DrawingMode(Mode):
     def appStarted(mode):
@@ -613,6 +677,7 @@ class MyModalApp(ModalApp):
         app.gameMode = GameMode()
         app.setActiveMode(app.splashScreenMode)
         app.drawingMode = DrawingMode()
+        app.instructionsMode = InstructionsMode()
 
 
 def main():
