@@ -4,10 +4,12 @@ from PIL import Image, ImageDraw, ImageColor
 
 
 # mode class structure is from https://www.cs.cmu.edu/~112/notes/notes-animations-part3.html#subclassingModalApp
+# all the image files are drawn by me 
 
 class SplashScreenMode(Mode):
     # welcome screen
     def redrawAll(mode, canvas):
+        # code to show image on canvas from https://www.c-sharpcorner.com/blogs/basics-for-displaying-image-in-tkinter-python 
         splash = PhotoImage(file='splash.png')
         canvas.create_image(mode.width/2, mode.height/2, image=splash)
         canvas.create_text(mode.width/2, mode.height/2 - 80, text='WELCOME TO', font='Arial 50 bold')
@@ -86,7 +88,7 @@ class InstructionsMode(Mode):
             text='(Use the arrow keys to navigate between slides)', 
             font='Arial 15 bold')
 
-        if mode.screen2 == True:
+        elif mode.screen2 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen2)
             canvas.create_text(mode.width/2, 70, 
             text='  Help him get to the muffin by \nusing your mouse to draw a line', 
@@ -103,7 +105,7 @@ class InstructionsMode(Mode):
             canvas.create_line(mode.linex0, 400, mode.linex1, 400, width=15)
             canvas.create_image(mode.linex1, 410, image=mouse)
 
-        if mode.screen3 == True:
+        elif mode.screen3 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen3)
             canvas.create_image(127, mode.height - 125, image=screen3help)
             canvas.create_text(mode.width/4, 290, 
@@ -122,7 +124,7 @@ class InstructionsMode(Mode):
             canvas.create_text(mode.arrowx1 - 3, 50, text ='>', 
             font='Arial 30 bold', fill='red')
 
-        if mode.screen4 == True:
+        elif mode.screen4 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen4)
             canvas.create_text(mode.width/2, 100, 
             text='Press the Right Arrow key \n               to play!', 
@@ -140,7 +142,7 @@ class DrawingMode(Mode):
         mode.draw = []
         mode.mouseMovedDelay = 0
         mode.penType = 'pen'
-        # list of colors from https://stackoverflow.com/questions/732192/get-tk-winfo-rgb-without-having-a-window-instantiated
+        # list of colors sourced from https://stackoverflow.com/questions/732192/get-tk-winfo-rgb-without-having-a-window-instantiated
         mode.colors = [['#CD0000', '#FF0000', '#FF6347'], 
                         ['#FF8C00', '#FFA500', '#FFD700'], 
                         ['#FFFF00', '#CD9B1D', '#6B8E23'], 
@@ -159,26 +161,7 @@ class DrawingMode(Mode):
         mode.startSpriteDrawing = None
 
 
-    # grid code from https://www.cs.cmu.edu/~112/notes/notes-animations-part1.html#exampleGrids
-
-    def getCell(mode, x, y): # cell bounds for drawing
-
-        # aka "viewToModel"
-        # return (row, col) in which (x, y) occurred or (-1, -1) if outside grid.
-        if (not mode.pointInGrid(x, y)):
-            return (-1, -1)
-        gridWidth  = mode.width - mode.margin
-        gridHeight = mode.height - mode.margin 
-        cellWidth  = gridWidth / mode.cols
-        cellHeight = gridHeight / mode.rows
-
-        # Note: we have to use int() here and not just // because
-        # row and col cannot be floats and if any of x, y, mode.margin,
-        # cellWidth or cellHeight are floats, // would still produce floats.
-        row = int((y - mode.margin) / cellHeight)
-        col = int((x - mode.margin) / cellWidth)
-
-        return (row, col)
+    # grid code modified from https://www.cs.cmu.edu/~112/notes/notes-animations-part1.html#exampleGrids
 
     def getCellBounds(mode, row, col):
         # aka "modelToView"
@@ -209,7 +192,7 @@ class DrawingMode(Mode):
     def mousePressed(mode, event): 
 
         # creating new image for sprite
-        # from https://stackoverflow.com/questions/9886274/how-can-i-convert-canvas-content-to-an-image
+        # sourced from https://stackoverflow.com/questions/9886274/how-can-i-convert-canvas-content-to-an-image
         if mode.newDrawing == True:
             mode.spriteImage = Image.new("RGB", (mode.width, mode.height), (0, 0, 0, 0))
             # putalpha is transparency. code from https://note.nkmk.me/en/python-pillow-putalpha/ 
@@ -257,11 +240,10 @@ class DrawingMode(Mode):
             mode.penType = 'pen'
     
     def exportSprite(mode):
-        # image crop code: https://stackoverflow.com/questions/9983263/how-to-crop-an-image-using-pil 
-
+        # image crop code sourced from https://stackoverflow.com/questions/9983263/how-to-crop-an-image-using-pil 
         sprite = mode.spriteImage.crop((100, 100, mode.width, mode.height)) 
 
-        # image thumbnail code: https://www.geeksforgeeks.org/python-pil-image-thumbnail-method/        
+        # image thumbnail code sourced from https://www.geeksforgeeks.org/python-pil-image-thumbnail-method/        
         sprite.thumbnail((50, 50)) 
         filename = "newcharacter.png"
         sprite.save(filename)
@@ -426,6 +408,7 @@ class GameMode(Mode):
             x, y = event.x, event.y
             mode.makeLine.append((x, y))
 
+    # grid code modified from https://www.cs.cmu.edu/~112/notes/notes-animations-part1.html#exampleGrids
     # new blocks code
     def getCellBoundsForBlocks(mode, row, col):
         cellWidth = mode.width / mode.level
@@ -530,11 +513,7 @@ class GameMode(Mode):
                 mode.chickeny = mode.makeLine[index][1] - mode.chickenr
                 mode.i -= 1
             else:
-                mode.onLine = False
-
-
-
-            
+                mode.onLine = False 
 
     def checkBlock(mode):
         # checks if chicken on block
@@ -575,8 +554,9 @@ class GameMode(Mode):
             x1 = (boundx0 + boundx1 + mode.sBlockW) /2 
             y0 = (boundy0 + boundy1) / 2 - (mode.sBlockH/2)
             y1 = (boundy0 + boundy1) / 2 + (mode.sBlockH/2)
-            if (mode.dx > 0 and abs(x0 - rightEdge) < 10) or (mode.dx < 0 and abs(x1 - leftEdge) < 10):
+            if (mode.dx > 0 and abs(x0 - rightEdge) < 3) or (mode.dx < 0 and abs(x1 - leftEdge) < 3):
                 if (y0 < topEdge < y1 or y0 < bottomEdge < y1):
+                    print('yeah')
                     mode.i = 0
                     return True
 
