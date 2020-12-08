@@ -71,6 +71,7 @@ class InstructionsMode(Mode):
         screen3 = PhotoImage(file='screen3.png')
         screen3help = PhotoImage(file='screen3-help.png')
         screen4 = PhotoImage(file='screen4.png')
+        mouse = PhotoImage(file='mouse.png')
 
         if mode.screen1 == True:
             canvas.create_image(mode.width/2, mode.height/2, image=screen1)
@@ -81,7 +82,7 @@ class InstructionsMode(Mode):
             text='All Bradley wants to do \n      is to eat muffins.', 
             font='Arial 30 bold')
             canvas.create_text(mode.width/2, mode.height-50, 
-            text='(Use the arrow keys to mode to navigate between slides)', 
+            text='(Use the arrow keys to navigate between slides)', 
             font='Arial 15 bold')
 
         if mode.screen2 == True:
@@ -92,18 +93,12 @@ class InstructionsMode(Mode):
             canvas.create_text(mode.width/2, 105, 
             text=' for him to walk on.', 
             font='Arial 20 bold')
-            canvas.create_text(mode.width/2, 170, 
-            text='    You can draw lines by \nclicking and releasing once,', 
-            font='Arial 30 bold')
-            canvas.create_text(mode.width/2, 235, 
-            text='       dragging, and then \nclicking and releasing again', 
-            font='Arial 30 bold')
-            canvas.create_text(mode.width/2, 285, 
-            text='to finish drawing.', 
-            font='Arial 30 bold')
-            canvas.create_text(mode.width/2, 320, 
-            text='You only have 1 line per level!', 
-            font='Arial 30 bold')
+            canvas.create_text(mode.width/2, 210, 
+            text='      You can draw lines by \nclicking and releasing once,\n       dragging, and then \nclicking and releasing again\n          to finish drawing.\nYou only have 1 line per level!', 
+            font='Arial 25 bold')
+            canvas.create_text(mode.width/2, 340, 
+            text='You should probably know that Bradley is a drama queen\n           and is very picky about the lines he walks on.\n               If he doesn\'t like it, press \'r\' to restart.', 
+            font='Arial 15 bold') 
             canvas.create_line(mode.linex0, 400, mode.linex1, 400, width=15)
             canvas.create_image(mode.linex1, 410, image=mouse)
 
@@ -131,9 +126,6 @@ class InstructionsMode(Mode):
             canvas.create_text(mode.width/2, 100, 
             text='Press the Right Arrow key \n               to play!', 
             font='Arial 30 bold')
-
-    
-            
 
 class DrawingMode(Mode):
     def appStarted(mode):
@@ -312,8 +304,6 @@ class DrawingMode(Mode):
                         rgbColor = ImageColor.getrgb(color)
                         mode.startSpriteDrawing.rectangle([(x0, y0), (x1, y1)], fill=rgbColor)
                         
-
-
 # code w Kosbie 12/5/2020
 def distance(x1, y1, x2, y2):
     return (((x2-x1)**2 + (y2-y1)**2)** 0.5)
@@ -331,7 +321,6 @@ def lineSegmentIntersectsCircle(x0, y0, x1, y1, cx, cy, r):
 
     if (B**2 - 4*A*C) < 0:
         # (the entire line did not hit the circle)
-        #print('2')
         return False
 
     x2 = (-B + (B**2 - 4*A*C)**0.5) / (2*A)
@@ -425,7 +414,7 @@ class GameMode(Mode):
             10 < event.y < 110):
             mode.app.setActiveMode(mode.app.drawingMode)
         else:
-            if mode.newLevel:
+            if mode.newLevel and mode.helpOn == False:
                 mode.go = True
                 mode.penDown = not mode.penDown
                 if mode.penDown:
@@ -474,7 +463,7 @@ class GameMode(Mode):
             x1 = (boundx0 + boundx1 + mode.sBlockW) /2 
             y0 = (boundy0 + boundy1) / 2 - (mode.sBlockH/2)
             y1 = (boundy0 + boundy1) / 2 + (mode.sBlockH/2)
-            if x0 > mode.width/2:
+            if x0 > mode.width/2 and y0 > mode.height/2:
                 midx = (x0 + x1) /2
                 midy = (y0 + y1) / 2
                 mode.muffinx = midx
@@ -722,9 +711,6 @@ class GameMode(Mode):
             canvas.create_text(mode.width/2, mode.width/2 - 10 , text='press Enter to restart level', 
                                                         font='Arial 15 bold') 
             
-            
-
-
 class MyModalApp(ModalApp):
     def appStarted(app):
         app.splashScreenMode = SplashScreenMode()
@@ -732,7 +718,6 @@ class MyModalApp(ModalApp):
         app.instructionsMode = InstructionsMode()
         app.drawingMode = DrawingMode()
         app.setActiveMode(app.splashScreenMode)
-
 
 def main():
     app = MyModalApp(width=500, height=500)
